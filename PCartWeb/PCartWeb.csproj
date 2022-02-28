@@ -630,6 +630,7 @@
     </Content>
     <Content Include="Views\Manage\EditDriverProfile.cshtml" />
     <Content Include="Views\Coopadmin\DetailsOfDriver.cshtml" />
+    <Content Include="Views\Paypalpayable\FailureView.cshtml" />
     <None Include="_aspnet_PCartWeb_20210713064462.xsd">
       <Generator>MSDataSetGenerator</Generator>
       <LastGenOutput>_aspnet_PCartWeb_20210713064462.Designer.cs</LastGenOutput>
