@@ -1,0 +1,72 @@
+﻿
+/*CUSTOM*/
+
+.custom-container {
+    margin-top: 5%;
+    margin-bottom: 5%;
+}
+
+.custom-form-1 {
+    padding: 5%;
+    box-shadow: 0 5px 8px 0 rgba(0, 0, 0, 0.2), 0 9px 26px 0 rgba(0, 0, 0, 0.19);
+}
+
+    .custom-form-1 h3 {
+        text-align: center;
+        color: #333;
+    }
+
+.custom-container form {
+    padding: 10%;
+}
+
+.btnSubmit {
+    width: 50%;
+    border-radius: 1rem;
+    padding: 1.5%;
+    border: none;
+    cursor: pointer;
+}
+
+.custom-form-1 .btnSubmit {
+    font-weight: 600;
+    color: #fff;
+    background-color: #0062cc;
+}
+
+.notification {
+    position: relative;
+    display: inline-block;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+    .notification .badge {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        padding: 5px 10px;
+        border-radius: 50%;
+        background: red;
+        color: white;
+    }
+
+@media only screen and (max-width: 600px) {
+    .notification {
+        position: relative;
+        display: inline-block;
+        margin-top: 3%;
+        margin-left: 0;
+    }
+
+        .notification .badge {
+            position: absolute;
+            top: -5px;
+            right: -10px;
+            margin-right: 93%;
+            padding: 5px 10px;
+            border-radius: 50%;
+            background: red;
+            color: white;
+        }
+}

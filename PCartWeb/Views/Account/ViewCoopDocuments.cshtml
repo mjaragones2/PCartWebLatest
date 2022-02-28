@@ -1,0 +1,43 @@
+﻿@model IEnumerable<PCartWeb.Models.CoopDocumentImages>
+
+@{
+    ViewBag.Title = "View Documents";
+}
+
+<head>
+    <link rel="stylesheet" href="~/Content/css/customStyle.css" />
+    <style>
+        h4 {
+            color: white;
+        }
+    </style>
+</head>
+<div class="container custom-form-1 custom-container">
+    <div class="form-horizontal">
+        <h4 class="w-100 bg-dark py-3 text-center">Uploaded Documents/Images</h4>
+        <div class="container">
+            <table class="table">
+                @*<tr>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Document_image)
+                    </th>
+                    <th></th>
+                </tr>*@
+
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            <img src="@Url.Content("~/Images/"+item.Document_image)" width="180" height="180" />
+                        </td>
+                        <td>
+                            @Html.ActionLink("Delete", "Delete", new { id = item.Id })
+                        </td>
+                    </tr>
+                }
+            </table>
+            <button type="button" onclick="location.href='@Url.Action("AddImageDocuments", "Account")'" class="btn btn-primary">Add Image</button>
+            <button type="button" class="btn btn-success" onclick="location.href = '@Url.Action("CoopVerification", "Account")'">Done</button>
+        </div>
+    </div>
+</div>

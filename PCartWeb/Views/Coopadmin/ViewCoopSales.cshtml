@@ -1,0 +1,276 @@
+﻿@model PCartWeb.Models.ViewSalesReport
+
+@{ ViewBag.Title = "ViewCoopSales"; }
+
+
+<head>
+    <link href="~/Content/css/customStyle.css" rel="stylesheet" />
+    <style>
+        th {
+            color: white;
+        }
+    </style>
+</head>
+<br />
+<button id="filter" class="btn btn-info" data-toggle="modal" data-target="#exampleModal">Filter</button>
+
+<br />
+
+<div style="text-align:center;">
+    <h4>Coop @ViewBag.ViewBy Sales</h4>
+</div>
+
+@*<button class="btn btn-primary" onclick="location.href = '@Url.Action("ViewCoopSales", "Paypal", new { money = totEach, user_id = id, vouchcode = vouchcode })'">Pay Order with PayPal</button>*@
+
+@*@Html.ActionLink("Export to PDF", "Reports", new { ReportType = "PDF" }) |
+    @Html.ActionLink("Export to Excel", "Reports", new { ReportType = "Excel" }) |
+    @Html.ActionLink("Export to Word", "Reports", new { ReportType = "Word" })*@
+
+@using (Html.BeginForm("CoopSalesPDF", "Coopadmin", FormMethod.Post, new { enctype = "multipart/form-data", id = "convertForm" }))
+{
+    <div id="convertThisPageButtonDiv">
+        <br />
+        <input type="submit" value="Generate PDF" class="btn btn-danger" />
+        <input type="hidden" value="@ViewBag.ViewBy" id="thedate" name="toshow" />
+        <input type="hidden" value="@ViewBag.DateStart" id="datestart" name="starteu" />
+        <input type="hidden" value="@ViewBag.DateEnd" id="dateend" name="endeu" />
+        <input type="hidden" value="@ViewBag.Selected" id="selected" name="selecteu" />
+    </div>
+    <br />
+
+    if (Model.SalesReports.Count > 0 || Model.SalesReports != null)
+    {
+        <div class="table-responsive table-hover">
+            <table class="table">
+                <tr class="bg-dark">
+                    <th>
+                        Image
+                    </th>
+                    <th>
+                        Product Name
+                    </th>
+                    <th>
+                        Sold Stock
+                    </th>
+                    <th>
+                        Total Sales
+                    </th>
+                    <th></th>
+                </tr>
+
+                @foreach (var view in Model.ViewByIDs)
+                {
+                    <tr style="text-align: center;">
+                        <td colspan="5">
+                            <b>@Html.DisplayFor(modelItem => view.ViewByID)</b> 
+                        </td>
+                    </tr>
+                    foreach (var item in Model.SalesReports)
+                    {
+                        if (view.ViewByID == item.ViewBy)
+                        {
+                            <tr>
+                                <td>
+                                    <img src="~/Images/@item.ProdImage" width="75" />
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.ProdName)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.SoldQty)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.TotalSales)
+                                </td>
+                            </tr>
+                        }
+                    }
+                    <tr>
+                        <td colspan="2"></td>
+                        <td><b>Total:</b></td>
+                        <td>
+                            @Html.DisplayFor(modelItem => view.TotalSales)
+                        </td>
+                    </tr>
+                }
+
+            </table>
+        </div>
+    }
+}
+
+<div class="modal fade modal-xl" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div id="convertThisPageButtonDiv2">
+                    @using (Html.BeginForm("ViewCoopSales", "Coopadmin", FormMethod.Post, new { enctype = "multipart/form-data", id = "form1" }))
+                    {
+                        <div class="custom-form-1 custom-container w-100" id="convertThisPageButtonDiv3">
+                            <h4>Coop Sales</h4>
+                            <hr />
+                            <p>View By: </p>
+                            <script src="~/Scripts/jquery-1.10.2.min.js"></script>
+                            <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">
+                            <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>
+                            <script>
+                                $(document).ready(function () {
+                                    $.getJSON("../Coopadmin/LoadProducts",
+                                        function (data) {
+                                            var tr;
+
+                                            for (var i = 0; i < data.length; i++) {
+                                                tr = $('<tr/>');
+                                                tr.append("<td>" + "<input name='isCheck' type='checkbox' class='check' value='" + data[i].Id + "' />");
+                                                tr.append("<td>" + '<img src="../Images/' + data[i].Image + '" width="50" height="50"/>' + "</td>");
+                                                tr.append("<td>" + data[i].Product_name + "</td>");
+                                                $('.table1').append(tr);
+                                            }
+
+                                            var oTable = $('#productList').dataTable({
+                                                stateSave: true
+                                            });
+
+                                            var allPages = oTable.fnGetNodes();
+
+                                            $('body').on('click', '#toggleAll', function () {
+                                                if (this.checked) {
+                                                    if ($(this).hasClass('check')) {
+                                                        $('input[type="checkbox"]', allPages).prop('checked', false);
+                                                    }
+                                                    else {
+                                                        $('input[type="checkbox"]', allPages).prop('checked', true);
+                                                    }
+                                                }
+                                                else {
+                                                    $('input[type="checkbox"]', allPages).prop('checked', false);
+                                                }
+                                                $(this).toggleClass('allChecked');
+                                            })
+
+                                            $(".check").click(function () {
+                                                if (!this.checked) {
+                                                    $("#toggleAll").prop('checked', false);
+                                                }
+                                                else if ($(".check").length == $(".check" + ":checked").length) {
+                                                    $("#toggleAll").prop('checked', true);
+                                                }
+                                            });
+
+                                            $('#productList').DataTable();
+                                        }
+                                    );
+                                });
+                            </script>
+
+                            <p class="text-danger" style="display: none" id="Error"></p>
+                            <div class="table-responsive table-hover">
+                                <table class="table1 table table-striped table-bordered table-hover" id="productList">
+                                    <thead>
+                                        <tr>
+                                            <th><input type="checkbox" id="toggleAll" /> All</th>
+                                            <th>Image</th>
+                                            <th>Name</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+
+                            <div class="form-group" id="convertThisPageButtonDiv4">
+                                <input type="radio" id="week" name="ViewBy" value="Weekly">
+                                <label for="week">Weekly</label>
+                                <br>
+                                <input type="radio" id="month" name="ViewBy" value="Monthly">
+                                <label for="month">Monthly</label>
+                                <br>
+                                <input type="radio" id="year" name="ViewBy" value="Yearly">
+                                <label for="year">Yearly</label>
+                                <div class="form-group">
+                                    @Html.LabelFor(model => model.DateStart, htmlAttributes: new { @class = "control-label col-md-4" })
+                                    <div class="col-md-10">
+                                        @Html.EditorFor(model => model.DateStart, new { htmlAttributes = new { @id = "DateStart", @class = "form-control", @Placeholder = "dd/MM/yyyy" } })
+                                        <p class="text-danger" style="display: none" id="ErrorDate1"></p>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    @Html.LabelFor(model => model.DateEnd, htmlAttributes: new { @class = "control-label col-md-4" })
+                                    <div class="col-md-10">
+                                        @Html.EditorFor(model => model.DateEnd, new { htmlAttributes = new { @id = "DateEnd", @class = "form-control", @Placeholder = "dd/MM/yyyy" } })
+                                        <p class="text-danger" style="display: none" id="ErrorDate2"></p>
+                                    </div>
+                                </div>
+                                <br /> <br />
+                                <input name="submit" type="submit" id="submit" value="Apply" class="btn btn-default" />
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shortcut-buttons-flatpickr@0.1.0/dist/themes/light.min.css">
+<script src="https://cdn.jsdelivr.net/npm/shortcut-buttons-flatpickr@0.1.0/dist/shortcut-buttons-flatpickr.min.js"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        flatpickr("#DateStart", {
+            enableTime: false,
+            dateFormat: 'd/m/Y',
+            minDate: "1/1/2021",
+            maxDate: "today"
+        });
+
+        flatpickr("#DateEnd", {
+            enableTime: false,
+            dateFormat: 'd/m/Y',
+            minDate: "1/1/2021",
+            maxDate: "today"
+        });
+
+        $('#form1').submit(function (e) {
+            e.preventDefault();
+            var _this = $(this);
+            var dateStart1 = $("#DateStart").val();
+            var dateEnd1 = $("#DateEnd").val();
+            var itemSelected = [];
+
+            $('.check').each(function () {
+                if ($(this).is(":checked")) {
+                    itemSelected.push($(this).val());
+                }
+            });
+
+            itemSelected = itemSelected.toString();
+
+            if (itemSelected == "") {
+                if (itemSelected == "") {
+                    document.getElementById('Error').style.display = "block";
+                    document.getElementById("Error").innerHTML = "Kindly choose a product to be discounted.";
+                }
+                else {
+                    document.getElementById('Error').style.display = "none";
+                }
+            }
+            else {
+                var date1 = dateStart1.split('/');
+                var dateStart2 = new Date(date1[2], date1[1] - 1, date1[0]);
+                var date2 = dateEnd1.split('/');
+                var dateEnd2 = new Date(date2[2], date2[1] - 1, date2[0]);
+
+                if (dateStart2 >= dateEnd2) {
+                    document.getElementById('ErrorDate2').style.display = "none";
+                    document.getElementById('ErrorDate1').style.display = "block";
+                    document.getElementById("ErrorDate1").innerHTML = "Date start is higher than date end. Kindly enter a valid date start.";
+                }
+                else {
+                    _this.unbind('submit').submit();
+                }
+            }
+        });
+    });
+</script>

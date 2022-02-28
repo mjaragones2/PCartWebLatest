@@ -1,0 +1,171 @@
+﻿@model PCartWeb.Models.ReturnRefundDetails
+
+@{
+    ViewBag.Title = "ReturnRefundDetails";
+}
+
+<head>
+    <link rel="stylesheet" href="~/Content/css/customStyle.css" />
+    <style>
+        h4 {
+            color: white;
+        }
+
+        .origprice {
+            text-decoration: line-through;
+        }
+
+        img {
+            transition: transform 0.25s ease;
+        }
+
+        .enlarge:hover {
+            width: 500px;
+            height: 500px;
+        }
+    </style>
+</head>
+
+<div class="container custom-form-1 custom-container">
+    <div class="form-horizontal">
+        <h4 class="w-100 bg-dark py-3 text-center">Order Details</h4>
+        <hr />
+        <h5>Return Refund Details</h5>
+        <hr />
+        <p>Order No.: @Html.DisplayFor(modelItem => Model.ReturnRefunds.UserOrderId)</p>
+        <table class="table">
+            <tr>
+                <th>
+                    Image
+                </th>
+                <th>
+                    Product Name
+                </th>
+                <th>
+                    Quantity
+                </th>
+                <th>
+                    Price
+                </th>
+                <th>
+                    Subtotal
+                </th>
+                <th></th>
+            </tr>
+
+            @foreach (var item in Model.RefundItem)
+            {
+    <tr>
+        <td>
+            <img src="@Url.Content("~/Images/" + item.ProdImage)" width="50" height="50" />
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.ProdName)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Qty)
+        </td>
+        <td>
+            @if (item.DiscountedPrice != 0)
+            {
+    <div class="price mt-1">
+        <span class="origprice">
+            &#8369; @Html.DisplayFor(modelItem => item.Price)
+        </span>
+        &#8369; @Html.DisplayFor(modelItem => item.DiscountedPrice)
+        @(((item.Price - item.DiscountedPrice) / item.Price) * 100)&percnt; OFF
+    </div> <!-- price-wrap.// --> }
+                    else if (item.MemberDiscountedPrice != 0)
+                    {
+    <div class="price mt-1">
+        <span class="origprice">
+            &#8369; @Html.DisplayFor(modelItem => item.Price)
+        </span>
+        &#8369; @Html.DisplayFor(modelItem => item.MemberDiscountedPrice)
+        @(((item.Price - item.MemberDiscountedPrice) / item.Price) * 100)&percnt; OFF
+    </div> <!-- price-wrap.// --> }
+                    else
+                    {
+    @Html.DisplayFor(modelItem => item.Price)}
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.SubTotal)
+        </td>
+    </tr>            }
+        </table>
+
+        <p><b>Status:</b> @Html.DisplayFor(modelitem => Model.ReturnRefunds.Status)</p>
+        <p><b>Type:</b> @Html.DisplayFor(modelitem => Model.ReturnRefunds.Type)</p>
+        <p><b>Reason:</b> @Html.DisplayFor(modelitem => Model.ReturnRefunds.Reason) </p>
+        <p><b>Refund Amount:</b> @Html.DisplayFor(modelitem => Model.ReturnRefunds.RefundAmount) </p>
+
+        @if (Model.ReturnRefunds.DateAccepted == null)
+        {
+            if (Model.ModeOfPayment == "Cash On Delivery")
+            {
+
+                <button data-toggle="modal" data-target="#exampleModal" class="btn btn-primary">Accept</button>
+            }
+            else
+            {
+                using (Html.BeginForm("AcceptReturn", "Coopadmin", FormMethod.Post, new { enctype = "multipart/form-data" }))
+                {
+                    <input type="hidden" value="@Model.ReturnRefunds.Id" name="returnrefundId" />
+                    <button class="btn btn-primary">Accept</button>
+                }
+
+            }
+
+        <button onclick="location.href = '@Url.Action("RejectReturn", "Coopadmin", new { id = Model.ReturnRefunds.Id })'" class="btn btn-primary">Reject</button>
+        }
+        else
+        {
+            <p><b>Receipt:</b> <img src="~/TransactionRefundReceipts/@Model.ReceiptImage" class="enlarge" width="100" /></p>
+            <p><b>Sender Name: </b>@Model.ConfirmedSenderName</p>
+            <p><b>Sender Contact: </b>@Model.ConfirmedSenderContact</p>
+            <p><b>Date Created: </b>@Model.DateIssued</p>
+        }
+
+    </div>
+</div>
+
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                </div>
+                @using (Html.BeginForm("AcceptReturn", "Coopadmin", FormMethod.Post, new { enctype = "multipart/form-data" }))
+                {
+                    <div class="modal-body">
+
+                        <div>
+                            <input type="hidden" value="@Model.ReturnRefunds.Id" name="returnrefundId" />
+                            <h5>Choose your preferable remittance</h5>
+                            <select required name="selecteu" class="form-control">
+                                <option value="">Please Select</option>
+                                <option value="Cebuana">Cebuana</option>
+                                <option value="MLhuillier">MLhuillier</option>
+                                <option value="Palawan">Palawan</option>
+                            </select>
+                            <hr />
+                            <h5>Upload your receipt</h5>
+                            <input type="file" name="ImageFile" id="imageFile" class="form-control" required />
+                            <hr />
+                            <h5>Sender Name</h5>
+                            <input type="text" value="@Model.SenderName" name="sendername" class="form-control" />
+                            <hr />
+                            <h5>Contact Number</h5>
+                            <input type="text" value="@Model.Contact" name="senderContact" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <input type="submit" class="btn btn-primary" value="Proceed"/>
+                    </div>
+                }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,78 @@
+﻿@model IEnumerable<PCartWeb.Models.DiscountViewModel>
+@using System.Globalization
+@{
+    ViewBag.Title = "List of Discounts";
+}
+
+<head>
+    <link href="~/Content/css/customStyle.css" rel="stylesheet" />
+    <style>
+        h4 {
+            color: white;
+        }
+
+        .origprice {
+            text-decoration: line-through;
+        }
+    </style>
+</head>
+
+<div class="container custom-form-1 custom-container">
+    <div class="form-horizontal">
+        <h4 class="w-100 bg-dark py-3 text-center">List of Discounts</h4>
+        <button style="margin-bottom: 10px" class="btn btn-primary" type="button" onclick="location.href = '@Url.Action("ProductDiscounts", "Coopadmin")'">Create New</button>
+
+        <script src="~/Scripts/jquery-1.10.2.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">
+        <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>
+        <script>
+            $(document).ready(function () {
+                $.getJSON("../Coopadmin/LoadDiscount",
+                    function (data) {
+                        var tr;
+
+                        for (var i = 0; i < data.length; i++) {
+                            tr = $('<tr/>');
+                            tr.append("<td>" + data[i].name + "</td>");
+                            tr.append("<td>" + data[i].percent + "</td>");
+                            tr.append("<td>" + data[i].dateStart + "</td>");
+                            tr.append("<td>" + data[i].dateEnd + "</td>");
+
+                            var datestart = data[i].dateStart.split('/');
+                            var currDate = new Date();
+                            var year = currDate.getFullYear();
+                            var month = currDate.getMonth() + 1;
+                            var day = currDate.getDate();
+
+                            if (parseInt(datestart[0]) > day && parseInt(datestart[1]) >= month && parseInt(datestart[2]) >= year) {
+                                tr.append("<td>" + '<a href="@Url.Action("EditDiscount", "Coopadmin")?id=' + data[i].id + '">Edit</a>' + ' | ' + '<a href="@Url.Action("DiscountDetails", "Coopadmin")?id=' + data[i].id + '">Details</a>' + ' | ' + '<a href="@Url.Action("DeleteDiscount", "Coopadmin")?id=' + data[i].id + '">Delete</a>' + "</td>");
+                            }
+                            else {
+                                tr.append("<td>" + '<a href="@Url.Action("DiscountDetails", "Coopadmin")?id=' + data[i].id + '">Details</a>' + "</td>");
+                            }
+
+                            $('.table').append(tr);
+                        }
+
+                        $('#discountList').DataTable();
+                    }
+                );
+            });
+        </script>
+
+        <div class="table-responsive table-hover">
+            <table class="table table-striped table-bordered table-hover" id="discountList">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Percent</th>
+                        <th>DateStart</th>
+                        <th>DateEnd</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>

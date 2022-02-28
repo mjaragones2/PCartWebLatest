@@ -1,0 +1,72 @@
+﻿@model IEnumerable<PCartWeb.Models.CoopDetailsModel>
+
+@{
+    ViewBag.Title = "Co-op Applications";
+}
+
+<head>
+    <link href="~/Content/css/customStyle.css" rel="stylesheet" />
+    <style>
+        h4 {
+            color: white;
+        }
+
+        .center {
+            margin: auto;
+            width: 50%;
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<div class="container custom-form-1 custom-container">
+    <div class="form-horizontal">
+        <h4 class="w-100 bg-dark py-3 text-center">Co-op Applications</h4>
+        <hr />
+        <div class="center">
+            <button style="margin-right: 50px;" class="btn btn-primary" type="button" onclick="location.href = '@Url.Action("ListOfCoops", "Admin")'"> Co-op List</button>
+            <button class="btn btn-primary" type="button" onclick="location.href = '@Url.Action("ViewPendingAdminAccnts", "Admin")'">View Pending Co-op Admin Application</button>
+        </div>
+        <br />
+
+        <script src="~/Scripts/jquery-1.10.2.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">
+        <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>
+        <script>
+            $(document).ready(function () {
+                $.getJSON("../Admin/LoadPendingCoop",
+                    function (data) {
+                        var tr;
+
+                        for (var i = 0; i < data.length; i++) {
+                            tr = $('<tr/>');
+                            tr.append("<td>" + data[i].name + "</td>");
+                            tr.append("<td>" + data[i].address + "</td>");
+                            tr.append("<td>" + data[i].contact + "</td>");
+                            tr.append("<td>" + data[i].dateCreated + "</td>");
+                            tr.append("<td>" + '<a href="@Url.Action("DisplayCoopDetailReq", "Admin")?id=' + data[i].coopId + '">Details</a>' + "</td>");
+                            $('.table').append(tr);
+                        }
+
+                        $('#pendingCoop').DataTable();
+                    }
+                );
+            });
+        </script>
+
+        <div class="table-responsive table-hover">
+            <table id="pendingCoop" class="table table-striped table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>Co-op Name</th>
+                        <th>Address</th>
+                        <th>Contact No.</th>
+                        <th>Date Applied</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>

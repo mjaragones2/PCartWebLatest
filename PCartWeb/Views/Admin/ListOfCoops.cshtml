@@ -1,0 +1,83 @@
+﻿@model IEnumerable<PCartWeb.Models.CoopDetailsModel>
+
+@{
+    ViewBag.Title = "List Of Co-op/s";
+}
+
+<head>
+    <link href="~/Content/css/customStyle.css" rel="stylesheet" />
+    <style>
+        h4 {
+            color: white;
+        }
+    </style>
+</head>
+
+<div class="container custom-form-1 custom-container">
+    <div class="form-horizontal">
+        <h4 class="w-100 bg-dark py-3 text-center">List of Co-ops</h4>
+        <hr />
+
+        @if (ViewBag.Message != null)
+        {
+    <div class="mx-5" id="center">
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @ViewBag.Message
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    </div>}
+
+        <script src="~/Scripts/jquery-1.10.2.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">
+        <script id="script1" type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>
+        <script>
+            $(document).ready(function () {
+                $.getJSON("../Admin/LoadCoopList",
+                    function (data) {
+                        var tr;
+
+                        for (var i = 0; i < data.length; i++) {
+                            tr = $('<tr/>');
+                            tr.append("<td>" + data[i].name + "</td>");
+                            tr.append("<td>" + data[i].address + "</td>");
+                            tr.append("<td>" + data[i].contact + "</td>");
+                            tr.append("<td>" + data[i].dateCreated + "</td>");
+                            tr.append("<td>" + data[i].dateUpdated + "</td>");
+                            tr.append("<td>" + '<a href="@Url.Action("DisplayCoopDetailReq", "Admin")?id=' + data[i].coopId + '">Details</a>' + "</td>");
+
+                            if (data[i].isLocked == "Unlock") {
+                                tr.append("<td>" + '<a href="@Url.Action("LockCoop", "Admin")?id=' + data[i].coopId + '">Lock</a>' + "</td>");
+                            }
+                            else {
+                                tr.append("<td>" + '<a href="@Url.Action("UnlockCoop", "Admin")?id=' + data[i].coopId + '">Unlock</a>' + "</td>");
+                            }
+
+                            $('.table').append(tr);
+                        }
+
+                        $('#coopList').DataTable();
+                    }
+                );
+            });
+        </script>
+
+        <div class="table-responsive table-hover">
+            <table class="table table-striped table-bordered table-hover" id="coopList">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Address</th>
+                        <th>Contact No.</th>
+                        <th>Date Applied</th>
+                        <th>Date Updated</th>
+                        <th>Details</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>

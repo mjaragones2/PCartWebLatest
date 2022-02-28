@@ -1,0 +1,90 @@
+﻿@model PCartWeb.Models.ViewDetailSalesReport
+
+@{
+    ViewBag.Title = "SalesReportDetail";
+}
+
+<h2>Sales Report Detail</h2>
+<style>
+    th{
+        color: white;
+    }
+</style>
+<div class="table-responsive">
+    <table class="table">
+        <tr>
+            <th style="color: black;">Order No:</th>
+            <td>@Model.OrderNo</td>
+            <td colspan="2"></td>
+        </tr>
+        <tr>
+            <th style="color: black;">Customer's Name:</th>
+            <td>@Model.Fname @Model.Lname</td>
+            <th style="color: black;">Date Ordered:</th>
+            <td>@Model.DateOrdered</td>
+        </tr>
+        <tr>
+            <th style="color: black;">Contact:</th>
+            <td>@Model.Contact</td>
+            <th style="color: black;">Address:</th>
+            <td>@Model.Address</td>
+        </tr>
+    </table>
+</div>
+<br />
+<div class="table-responsive table-hover">
+    <table class="table">
+        <thead>
+            <tr class="bg-dark">
+                <th>
+                    COOP Name
+                </th>
+                <th>
+                    Item Name
+                </th>
+                <th>
+                    Qty
+                </th>
+                <th>
+                    Price
+                </th>
+                <th>
+                    Subtotal
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.DetailsViews.Count > 0)
+            {
+                foreach (var item in Model.DetailsViews)
+                {
+                    <tr>
+                        <td>@Html.DisplayFor(model => item.CoopName)</td>
+                        <td>@Html.DisplayFor(model => item.ItemName)</td>
+                        <td>@Html.DisplayFor(model => item.Qty)</td>
+                        <td>@Html.DisplayFor(model => item.Price)</td>
+                        <td>@Html.DisplayFor(model => item.PartialTotal)</td>
+                    </tr>
+                }
+                <tr class="bg-dark">
+                    <td colspan="5"></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <th style="color: black;">Total:</th>
+                    <td>Php @Model.TotalAmount</td>
+                </tr>
+            }
+            else
+            {
+                <tr>
+                    <td colspan="4" style="text-align: center; color: black;">No Data...</td>
+                </tr>
+            }
+
+        </tbody>
+
+    </table>
+</div>
