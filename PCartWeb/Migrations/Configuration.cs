@@ -302,9 +302,9 @@ namespace PCartWeb.Migrations
                                 }
                             }
 
-                            //---------------------- Adding 10 riders per COOP-------------------------
+                            //---------------------- Adding 20 riders per COOP-------------------------
 
-                            for (int rider = 0; rider < 10; rider++)
+                            for (int rider = 0; rider < 20; rider++)
                             {
                                 var driverrole = roleManager.FindByName("Driver");
                                 var addrideridentity = new Faker<ApplicationUser>()
@@ -537,9 +537,9 @@ namespace PCartWeb.Migrations
                                 }
                             }
 
-                            //---------------------- Adding 10 riders per COOP-------------------------
+                            //---------------------- Adding 20 riders per COOP-------------------------
 
-                            for (int rider = 0; rider < 10; rider++)
+                            for (int rider = 0; rider < 20; rider++)
                             {
                                 var driverrole = roleManager.FindByName("Driver");
                                 var addrideridentity = new Faker<ApplicationUser>()
@@ -613,7 +613,7 @@ namespace PCartWeb.Migrations
             var customer = context.UserDetails.ToList();
             if (customer.Count == 0)
             {
-                for (int i = 0; i < 10; i++)
+                for (int i = 0; i < 500; i++)
                 {
                     var faker = new Faker("en_US");
                     var pass = "PCartpass@2021";
@@ -690,7 +690,7 @@ namespace PCartWeb.Migrations
 
                 //-------------------- Adding 500 Customers (Non-Members) ------------------
 
-                for (int j = 0; j < 10; j++)
+                for (int j = 0; j < 500; j++)
                 {
                     var faker = new Faker("en_US");
                     var pass = "PCartpass@2021";
