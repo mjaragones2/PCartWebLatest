@@ -163,7 +163,7 @@
     </div>
 }
 <!-- ------------- if it is a remittance method -->
-@using (Html.BeginForm())
+@using (Html.BeginForm("Index", "Coopadmin", FormMethod.Post, new { enctype = "multipart/form-data", id = "form1" }))
 {
     <div class="modal fade" id="exampleModal2" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -174,29 +174,58 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <div class="modal-body">
-                    <input name="amount" placeholder="Request amount" type="number" value="" class="form-control" pattern="[0-9]{6}" required min="1" />
-                </div>
-                <div class="modal-body">
-                    <select name="select" required class="form-control">
-                        <option value="">Please Select</option>
-                        <option value="Cebuana Lhuillier">Cebuana Lhuillier</option>
-                        <option value="M Lhuillier">M Lhuillier</option>
-                        <option value="Palawan Express">Palawan Express</option>
-                    </select>
-                </div>
-                <div class="modal-body">
-                    <input name="name" placeholder="Representative's Fullname" type="text" value="@fullname" class="form-control" required />
-                </div>
-                <div class="modal-body">
-                    <input name="contact" placeholder="Representative's Contact Number" type="tel" pattern="[0-9]{11}" value="@contact" required class="form-control" />
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <input class="btn btn-primary" name="remittance" value="Request" type="submit" />
-                </div>
+                <form>
+                    <fieldset>
+                        <div class="modal-body">
+                            <input name="amount" placeholder="Request amount" type="number" value="" class="form-control" pattern="[0-9]{6}" required min="1" />
+                        </div>
+                        <div class="modal-body">
+                            <select name="select" id="optselect" required class="form-control">
+                                <option value="">Please Select</option>
+                                <option value="Cebuana Lhuillier">Cebuana Lhuillier</option>
+                                <option value="M Lhuillier">M Lhuillier</option>
+                                <option value="Palawan Express">Palawan Express</option>
+                            </select>
+                            <p class="text-danger" style="display: none; font-size: 16px;" id="RemittanceError"></p>
+                        </div>
+                        <div class="modal-body">
+                            <input name="name" placeholder="Representative's Fullname" type="text" value="@fullname" class="form-control" required />
+                        </div>
+                        <div class="modal-body">
+                            <input name="contact" placeholder="Representative's Contact Number" type="tel" value="@contact" required class="form-control" />
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <input class="btn btn-primary" name="remittance" value="Request" type="submit" />
+                        </div>
+                    </fieldset>
+                </form>
             </div>
         </div>
     </div>
 }
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#form1').submit(function (e) {
+            e.preventDefault();
+            var _this = $(this);
+            var optselect = $("#optselect").val();
+
+            if (optselect != "Cebuana Lhuillier" && optselect != "M Lhuillier" && optselect != "Palawan Express") {
+                if (optselect != "Cebuana Lhuillier" && optselect != "M Lhuillier" && optselect != "Palawan Express") {
+                    document.getElementById("RemittanceError").style.display = "block";
+                    document.getElementById("RemittanceError").innerHTML = "Kindly choose from the list.";
+                }
+                else {
+                    document.getElementById("RemittanceError").style.display = "none";
+                }
+
+            }
+            else {
+                _this.unbind('submit').submit();
+            }
+        });
+    });
+</script>
 
