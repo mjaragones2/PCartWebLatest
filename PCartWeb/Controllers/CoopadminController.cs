@@ -5113,6 +5113,7 @@ namespace PCartWeb.Controllers
                     {
                         numMessage++;
                     }
+                    
                 }
 
                 data.Add(new
@@ -5124,7 +5125,7 @@ namespace PCartWeb.Controllers
             {
                 data.Add(new
                 {
-                    numMess = numMessage
+                    numMess = numMessage //wait sa sige'2 djuls take your time
                 });
             }
 
@@ -5200,6 +5201,10 @@ namespace PCartWeb.Controllers
                         {
                             from = coopDetails.CoopName;
                         }
+
+                        message.IsRead = true;
+                        db.Entry(message).State = EntityState.Modified;
+                        db.SaveChanges(); //sakto ra nuh? yes yes sa coop sa palihog sige'2 djuls
 
                         messages.Add(new ChatMessage
                         {

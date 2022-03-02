@@ -4034,6 +4034,10 @@ namespace PCartWeb.Controllers
                         {
                             from = coopDetails.CoopName;
                         }
+                        
+                        message.IsRead = true;
+                        db.Entry(message).State = EntityState.Modified;
+                        db.SaveChanges(); 
 
                         messages.Add(new ChatMessage
                         {
