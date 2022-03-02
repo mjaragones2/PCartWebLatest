@@ -4925,6 +4925,50 @@ namespace PCartWeb.Controllers
             return RedirectToAction("OrderDetails", new { id = model.UserOrderId });
         }
 
+        [HttpGet]
+        public JsonResult LoadNotifications()
+        {
+            var data = new List<object>();
+            var db = new ApplicationDbContext();
+            var user = User.Identity.GetUserId();
+            var coopAdmin = db.CoopAdminDetails.Where(ca => ca.UserId == user).FirstOrDefault();
+            var allCoopAdmin = db.CoopAdminDetails.Where(ca => ca.Coop_code == coopAdmin.Coop_code).ToList();
+            var unreadNotification = db.Notifications.Where(n => (n.ToUser == user || n.ToRole == "Coop Admin") && n.IsRead == false).ToList();
+            var numNotif = 0;
+
+            if (unreadNotification != null)
+            {
+                foreach (var notif in unreadNotification)
+                {
+                    numNotif++;
+                }
+
+                foreach (var admin in allCoopAdmin)
+                {
+                    unreadNotification = db.Notifications.Where(n => n.ToUser == admin.UserId && n.IsRead == false).ToList();
+
+                    foreach (var notif in unreadNotification)
+                    {
+                        numNotif++;
+                    }
+                }
+
+                data.Add(new
+                {
+                    numNotif = numNotif
+                });
+            }
+            else
+            {
+                data.Add(new
+                {
+                    numNotif = numNotif
+                });
+            }
+
+            return Json(data, JsonRequestBehavior.AllowGet);
+        }
+
         public ActionResult ViewNotification()
         {
             var db = new ApplicationDbContext();
@@ -5044,6 +5088,46 @@ namespace PCartWeb.Controllers
             db.SaveChanges();
 
             data.Add(new { mess = 1 });
+            return Json(data, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpGet]
+        public JsonResult LoadNumMessage()
+        {
+            var data = new List<object>();
+            var db = new ApplicationDbContext();
+            var user = User.Identity.GetUserId();
+            var coopAdminDetails = db.CoopAdminDetails.Where(u => u.UserId == user).FirstOrDefault();
+            var coopDetails = db.CoopDetails.Where(c => c.Id == coopAdminDetails.Coop_code).FirstOrDefault();
+            var coopChat = db.CoopChats.Where(cc => cc.CoopId == coopDetails.Id.ToString()).ToList();
+            
+            var numMessage = 0;
+
+            if (coopChat != null)
+            {
+                foreach (var chat in coopChat)
+                {
+                    var chatmessage = db.ChatMessages.Where(cc => cc.CoopChatId == chat.Id && cc.IsRead == false).ToList();
+
+                    foreach (var chatM in chatmessage)
+                    {
+                        numMessage++;
+                    }
+                }
+
+                data.Add(new
+                {
+                    numMess = numMessage
+                });
+            }
+            else
+            {
+                data.Add(new
+                {
+                    numMess = numMessage
+                });
+            }
+
             return Json(data, JsonRequestBehavior.AllowGet);
         }
 

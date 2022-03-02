@@ -3737,6 +3737,67 @@ namespace PCartWeb.Controllers
             return View(model);
         }
 
+        [HttpGet]
+        public JsonResult LoadNotifications()
+        {
+            var data = new List<object>();
+            var db = new ApplicationDbContext();
+            var user = User.Identity.GetUserId();
+            var userDetails = db.Users.Where(r => r.Id == user).FirstOrDefault();
+            var numNotif = 0;
+
+            if (User.IsInRole("Member"))
+            {
+                var unreadNotification = db.Notifications.Where(n => (n.ToUser == user || n.ToRole == "Member") && n.IsRead == false).ToList();
+
+                if (unreadNotification != null)
+                {
+                    foreach (var notif in unreadNotification)
+                    {
+                        numNotif++;
+                    }
+
+                    data.Add(new
+                    {
+                        numNotif = numNotif
+                    });
+                }
+                else
+                {
+                    data.Add(new
+                    {
+                        numNotif = numNotif
+                    });
+                }
+            }
+            else
+            {
+                var unreadNotification = db.Notifications.Where(n => (n.ToUser == user || n.ToRole == "Non-member") && n.IsRead == false).ToList();
+
+                if (unreadNotification != null)
+                {
+                    foreach (var notif in unreadNotification)
+                    {
+                        numNotif++;
+                    }
+
+                    data.Add(new
+                    {
+                        numNotif = numNotif
+                    });
+                }
+                else
+                {
+                    data.Add(new
+                    {
+                        numNotif = numNotif
+                    });
+                }
+            }
+
+            return Json(data, JsonRequestBehavior.AllowGet);
+        }
+
         public ActionResult ViewNotification()
         {
             var db = new ApplicationDbContext();
@@ -3868,6 +3929,44 @@ namespace PCartWeb.Controllers
             db.Entry(notif).State = EntityState.Modified;
             db.SaveChanges();
             data.Add(new { mess = 1 });
+            return Json(data, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpGet]
+        public JsonResult LoadNumMessage()
+        {
+            var data = new List<object>();
+            var db = new ApplicationDbContext();
+            var user = User.Identity.GetUserId();
+            var userDetails = db.UserDetails.Where(u => u.AccountId == user).FirstOrDefault();
+            var coopChat = db.CoopChats.Where(cc => cc.UserId == user).ToList();
+            var numMessage = 0;
+
+            if (coopChat != null)
+            {
+                foreach (var chat in coopChat)
+                {
+                    var chatmessage = db.ChatMessages.Where(cc => cc.CoopChatId == chat.Id && cc.IsRead == false).ToList();
+
+                    foreach (var chatM in chatmessage)
+                    {
+                        numMessage++;
+                    }//sige sige
+                }
+
+                data.Add(new
+                {
+                    numMess = numMessage
+                });
+            }
+            else
+            {
+                data.Add(new
+                {
+                    numMess = numMessage
+                });
+            }
+
             return Json(data, JsonRequestBehavior.AllowGet);
         }
 

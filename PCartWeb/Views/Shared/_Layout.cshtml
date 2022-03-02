@@ -109,12 +109,29 @@
                         </div>
                     </li>
                     <li class="nav-item notification">
+                        <script>
+                            $(document).ready(function () {
+                                $.getJSON("../Admin/LoadNotifications",
+                                    function (data) {
+                                        var numNotif = data[0].numNotif;
+
+                                        if (numNotif != 0) {
+                                            $("#numNotifA").html("" + numNotif);
+                                        }
+                                        else {
+                                            $("#numNotifA").removeClass("badge");
+                                            $("#numNotifA").html("");
+                                        }
+                                    }
+                                );
+                            });
+                        </script>
                         <a href="@Url.Action("ViewNotification", "Admin")" class="nav-link">
                             <i class="fas fa-bell"></i>
-                            <span class="badge" id="numOfNotifications"></span>
+                            <span class="badge" id="numNotifA"></span>
                         </a>
                         @*@Html.ActionLink("Notifications", "ViewNotification", "Admin", new { area = "" }, new { @class = "nav-link" })
-                        <span class="badge" id="numOfNotifications"></span>*@
+        <span class="badge" id="numOfNotifications"></span>*@
                     </li>
                 </ul>
             }
@@ -128,15 +145,49 @@
                     <li class="nav-item">@Html.ActionLink("E-Wallet History", "ViewEwalletHistory", "Home", new { area = "" }, new { @class = "nav-link" })</li>
                     <li class="nav-item">@Html.ActionLink("Product Proposals", "ProductListRequests", "Member", new { area = "" }, new { @class = "nav-link" })</li>
                     <li class="nav-item notification">
+                        <script>
+                            $(document).ready(function () {
+                                $.getJSON("../Home/LoadNumMessage",
+                                    function (data) {
+                                        var numMess = data[0].numMess;
+
+                                        if (numMess != 0) {
+                                            $("#numMessM").html("" + numMess);
+                                        }
+                                        else {
+                                            $("#numMessM").removeClass("badge");
+                                            $("#numMessM").html("");
+                                        }
+                                    }
+                                );
+                            });
+                        </script>
                         <a href="@Url.Action("InboxChat", "Home")" class="nav-link">
                             <i class="fas fa-envelope"></i>
-                            <span class="badge" id="numOfNotifications"></span>
+                            <span class="badge" id="numMessM"></span>
                         </a>
                     </li>
                     <li class="nav-item notification">
+                        <script>
+                            $(document).ready(function () {
+                                $.getJSON("../Home/LoadNotifications",
+                                    function (data) {
+                                        var numNotif = data[0].numNotif;
+
+                                        if (numNotif != 0) {
+                                            $("#numNotifM").html("" + numNotif);
+                                        }
+                                        else {
+                                            $("#numNotifM").removeClass("badge");
+                                            $("#numNotifM").html("");
+                                        }
+                                    }
+                                );
+                            });
+                        </script>
                         <a href="@Url.Action("ViewNotification", "Home")" class="nav-link">
                             <i class="fas fa-bell"></i>
-                            <span class="badge" id="numOfNotifications"></span>
+                            <span class="badge" id="numNotifM"></span>
                         </a>
                     </li>
                 </ul>
@@ -150,15 +201,49 @@
                     <li class="nav-item">@Html.ActionLink("Inbox", "InboxChat", "Home", new { area = "" }, new { @class = "nav-link" })</li>
                     <li class="nav-item">@Html.ActionLink("E-Wallet History", "ViewEwalletHistory", "Home", new { area = "" }, new { @class = "nav-link" })</li>
                     <li class="nav-item notification">
+                        <script>
+                            $(document).ready(function () {
+                                $.getJSON("../Home/LoadNumMessage",
+                                    function (data) {
+                                        var numMess = data[0].numMess;
+
+                                        if (numMess != 0) {
+                                            $("#numMessN").html("" + numMess);
+                                        }
+                                        else {
+                                            $("#numMessN").removeClass("badge");
+                                            $("#numMessN").html("");
+                                        }
+                                    }
+                                );
+                            });
+                        </script>
                         <a href="@Url.Action("InboxChat", "Home")" class="nav-link">
                             <i class="fas fa-envelope"></i>
-                            <span class="badge" id="numOfNotifications"></span>
+                            <span class="badge" id="numMessN"></span>
                         </a>
                     </li>
                     <li class="nav-item notification">
+                        <script>
+                            $(document).ready(function () {
+                                $.getJSON("../Home/LoadNotifications",
+                                    function (data) {
+                                        var numNotif = data[0].numNotif;
+
+                                        if (numNotif != 0) {
+                                            $("#numNotifN").html("" + numNotif);
+                                        }
+                                        else {
+                                            $("#numNotifN").removeClass("badge");
+                                            $("#numNotifN").html("");
+                                        }
+                                    }
+                                );
+                            });
+                        </script>
                         <a href="@Url.Action("ViewNotification", "Home")" class="nav-link">
                             <i class="fas fa-bell"></i>
-                            <span class="badge" id="numOfNotifications"></span>
+                            <span class="badge" id="numNotifN"></span>
                         </a>
                     </li>
                 </ul>
@@ -208,15 +293,49 @@
                         </div>
                     </li>
                     <li class="nav-item notification">
+                        <script>
+                            $(document).ready(function () {
+                                $.getJSON("../Coopadmin/LoadNumMessage",
+                                    function (data) {
+                                        var numMess = data[0].numMess;
+
+                                        if (numMess != 0) {
+                                            $("#numMessC").html("" + numMess);
+                                        }
+                                        else {
+                                            $("#numMessC").removeClass("badge");
+                                            $("#numMessC").html("");
+                                        }
+                                    }
+                                );
+                            });
+                        </script>
                         <a href="@Url.Action("InboxChat", "Coopadmin")" class="nav-link">
                             <i class="fas fa-envelope"></i>
-                            <span class="badge" id="numOfNotifications"></span>
+                            <span class="badge" id="numMessC"></span>
                         </a>
                     </li>
                     <li class="nav-item notification">
+                        <script>
+                            $(document).ready(function () {
+                                $.getJSON("../Coopadmin/LoadNotifications",
+                                    function (data) {
+                                        var numNotif = data[0].numNotif;
+
+                                        if (numNotif != 0) {
+                                            $("#numNotifC").html("" + numNotif);
+                                        }
+                                        else {
+                                            $("#numNotifC").removeClass("badge");
+                                            $("#numNotifC").html("");
+                                        }
+                                    }
+                                );
+                            });
+                        </script>
                         <a href="@Url.Action("ViewNotification", "Coopadmin")" class="nav-link">
                             <i class="fas fa-bell"></i>
-                            <span class="badge" id="numOfNotifications"></span>
+                            <span class="badge" id="numNotifC"></span>
                         </a>
                     </li>
                     @*<li class="nav-item">@Html.ActionLink("Notifications", "ViewNotification", "Coopadmin", new { area = "" }, new { @class = "nav-link" })</li>
@@ -232,9 +351,26 @@
                     <li class="nav-item">@Html.ActionLink("Delivery History", "DeliveryHistory", "Driver", new { area = "" }, new { @class = "nav-link" })</li>
                     <li class="nav-item">@Html.ActionLink("Notifications", "ViewNotification", "Driver", new { area = "" }, new { @class = "nav-link" })</li>
                     <li class="nav-item notification">
+                        <script>
+                            $(document).ready(function () {
+                                $.getJSON("../Driver/LoadNotifications",
+                                    function (data) {
+                                        var numNotif = data[0].numNotif;
+                                        alert(numNotif);
+                                        if (numNotif != 0) {
+                                            $("#numNotifD").html("" + numNotif);
+                                        }
+                                        else {
+                                            $("#numNotifD").removeClass("badge");
+                                            $("#numNotifD").html("");
+                                        }
+                                    }
+                                );
+                            });
+                        </script>
                         <a href="@Url.Action("ViewNotification", "Driver")" class="nav-link">
                             <i class="fas fa-bell"></i>
-                            <span class="badge" id="numOfNotifications"></span>
+                            <span class="badge" id="numNotifD"></span>
                         </a>
                     </li>
                 </ul>

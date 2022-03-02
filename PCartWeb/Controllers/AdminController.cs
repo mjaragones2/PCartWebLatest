@@ -2995,6 +2995,40 @@ namespace PCartWeb.Controllers
             return View(request);
         }
 
+
+        [HttpGet]
+        public JsonResult LoadNotifications()
+        {
+            var data = new List<object>();
+            var db = new ApplicationDbContext();
+            var user = User.Identity.GetUserId();
+            var unreadNotification = db.Notifications.Where(n => (n.ToUser == user || n.ToRole == "Admin") && n.IsRead == false).OrderByDescending(x => x.Id).ToList();
+            
+            var numNotif = 0;
+
+            if (unreadNotification != null)
+            {
+                foreach (var notif in unreadNotification)
+                {
+                    numNotif++;
+                }
+
+                data.Add(new
+                {
+                    numNotif = numNotif
+                });
+            }
+            else
+            {
+                data.Add(new
+                {
+                    numNotif = numNotif
+                });
+            }
+
+            return Json(data, JsonRequestBehavior.AllowGet);
+        }
+
         public ActionResult ViewNotification()
         {
             var db = new ApplicationDbContext();
