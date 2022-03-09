@@ -6063,6 +6063,10 @@ namespace PCartWeb.Controllers
                 date.Clear();
                 prodId.Clear();
             }
+            else
+            {
+                ModelState.AddModelError("ViewBy", "Please select a valid Date!");
+            }
 
             model.SalesReports = productSales;
             model.ViewByIDs = viewBy;

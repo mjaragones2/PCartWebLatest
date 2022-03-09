@@ -1825,13 +1825,22 @@ namespace PCartWeb.Controllers
                         }
                     }
                 }
+                
 
                 price = 0;
                 coopId.Clear();
                 date.Clear();
                 prodId.Clear();
             }
-            
+            else
+            {
+                ModelState.AddModelError("ViewBy", "Please select a valid Date!");
+                model.SalesReports = productSales;
+                model.ViewByIDs = viewBy;
+                model.Coops = allCoops;
+                return View(model);
+            }
+
             model.SalesReports = productSales;
             model.ViewByIDs = viewBy;
             model.Coops = allCoops;
@@ -2823,6 +2832,10 @@ namespace PCartWeb.Controllers
                     viewBySale = null;
                 }
                 
+            }
+            else
+            {
+                ModelState.AddModelError("ViewBy", "Please select a valid Date!");
             }
 
             model.OrderList = orderlist;
