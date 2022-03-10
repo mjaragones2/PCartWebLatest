@@ -579,7 +579,7 @@ namespace PCartWeb.Controllers
                             {
                                 model.Image = name + extension;
                                 var myfile = name + extension;
-                                var path = Path.Combine(Server.MapPath("../Images/"), myfile);
+                                var path = Path.Combine(Server.MapPath("~/Images/"), myfile);
                                 var details = new CustomerDetailsModel { Firstname = model.Firstname, Lastname = model.Lastname, Image = model.Image, Created_at = DateTime.Now, Updated_at = DateTime.Now, Address = model.Address, Bdate = model.Bdate.ToString(), Contact = model.Contact, Gender = model.Gender, Role = "Non-Member", AccountId = user.Id };
                                 details.IsActive = "Active";
                                 var cart = new UserCart { UserId = user.Id };
