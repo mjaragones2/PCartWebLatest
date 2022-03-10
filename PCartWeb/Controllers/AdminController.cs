@@ -714,14 +714,17 @@ namespace PCartWeb.Controllers
         {
             var data = new List<object>();
             var db = new ApplicationDbContext();
+
             var coops = db.CoopDetails.Where(x => x.Approval == "Approved").ToList();
 
             if (coops != null)
             {
                 foreach (var coop in coops)
                 {
+                    var coopdetail = db.CoopAdminDetails.Where(x => x.IsResign != null && x.Coop_code == coop.Id).FirstOrDefault();
                     data.Add(new
                     {
+                        email = coopdetail.Email,
                         name = coop.CoopName,
                         address = coop.Address,
                         contact = coop.Contact,
