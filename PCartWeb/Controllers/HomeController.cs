@@ -4792,7 +4792,7 @@ namespace PCartWeb.Controllers
                 }
             }
 
-            var userorder = db.UserOrders.Where(x => x.UserId == user && x.Id.ToString() == orderid).FirstOrDefault();
+            var userorder = db.UserOrders.Where(x => x.UserId == user && x.Id.ToString() == id).FirstOrDefault();
             var returnrefunds = db.ReturnRefunds.Where(x => x.UserOrderId == userorder.Id).FirstOrDefault();
             if (userorder != null)
             {
@@ -4848,7 +4848,7 @@ namespace PCartWeb.Controllers
                 }
             }
 
-            return RedirectToAction("OrderDetails", new { id = orderid });
+            return RedirectToAction("OrderDetails", new { id = id });
         }
 
         public ActionResult ReturnRefundItem(string id)

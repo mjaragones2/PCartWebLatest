@@ -377,15 +377,20 @@ namespace PCartWeb.Models
 
     public class ViewBy
     {
+        public string Date { get; set; }
+        public string Cooplogo { get; set; }
         public string ViewByID { get; set; }
         public string CoopId { get; set; }
         public string CoopName { get; set; }
         public decimal TotalSales { get; set; }
+        public decimal TotalCost { get; set; }
     }
 
     public class SalesReport2
     {
+        public string Cooplogo { get; set; }
         public string ViewBy { get; set; }
+        public string DateBought { get; set; }
         public string CoopId { get; set; }
         public int ProdID { get; set; }
         public string ProdImage { get; set; }
@@ -396,6 +401,9 @@ namespace PCartWeb.Models
 
     public class ViewSalesReport
     {
+        public string ProdIDS { get; set; }
+        public string CoopLogo { get; set; }
+        public string CoopName { get; set; }
         public IList<SalesReport> OrderList { get; set; }
         public IList<SalesReport2> SalesReports { get; set; }
         public IList<ViewBy> ViewByIDs { get; set; }

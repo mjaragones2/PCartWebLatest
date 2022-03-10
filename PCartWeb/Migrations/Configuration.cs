@@ -138,7 +138,7 @@ namespace PCartWeb.Migrations
 
             //---------------------------- Adding 3 Coops --------------------------------
             var cooplist = context.CoopDetails.ToList();
-            if (cooplist.Count == 0)
+            if (cooplist.Count == 0 || cooplist == null)
             {
                 for (int k = 0; k < 3; k++)
                 {

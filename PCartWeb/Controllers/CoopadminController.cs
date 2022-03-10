@@ -5535,7 +5535,14 @@ namespace PCartWeb.Controllers
         {
             var db = new ApplicationDbContext();
             var model = new ViewSalesReport();
-
+            var userid = User.Identity.GetUserId();
+            var coopdadmin = db.CoopAdminDetails.Where(x => x.UserId == userid).FirstOrDefault();
+            if (coopdadmin != null)
+            {
+                var coopdetail = db.CoopDetails.Where(x => x.Id == coopdadmin.Coop_code).FirstOrDefault();
+                model.CoopName = coopdetail.CoopName;
+                model.CoopLogo = coopdetail.CoopLogo;
+            }
             List<SalesReport2> orderlist = new List<SalesReport2>();
             List<ViewBy> viewBy = new List<ViewBy>();
 
@@ -5549,16 +5556,27 @@ namespace PCartWeb.Controllers
         public ActionResult ViewCoopSales(ViewSalesReport model)
         {
             var db = new ApplicationDbContext();
-            string selected = Request.Form["isCheck"].ToString();
-            string[] selectedList = selected.Split(',');
+            string selected = Request.Form["ProdIDS"];
+            string[] selectedList = selected.ToString().Split(',');
             var date1 = model.DateStart;
             var date2 = model.DateEnd;
+            var userid = User.Identity.GetUserId();
             List<SalesReport2> productSales = new List<SalesReport2>();
             List<ViewBy> viewBy = new List<ViewBy>();
             List<UserOrder> userOrders = GetUserOrders();
+            List<ProdOrder> prodOrders = GetProdOrders();
+            List<UserVoucherUsed> voucherUsed = GetVoucherUsed();
             List<string> date = new List<string>();
             List<string> prodId = new List<string>();
             decimal price = 0;
+
+            var coopdadmin = db.CoopAdminDetails.Where(x => x.UserId == userid).FirstOrDefault();
+            if(coopdadmin != null)
+            {
+                var coopdetail = db.CoopDetails.Where(x => x.Id == coopdadmin.Coop_code).FirstOrDefault();
+                model.CoopName = coopdetail.CoopName;
+                model.CoopLogo = coopdetail.CoopLogo;
+            }
 
             if (model.ViewBy != null)
             {
@@ -5573,119 +5591,86 @@ namespace PCartWeb.Controllers
                 ViewBag.Selected = selected;
             }
 
-
             if (model.ViewBy != null && model.ViewBy == "Yearly")
             {
                 foreach (var itemSelect in selectedList)
                 {
                     foreach (var order in userOrders)
                     {
-                        var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).FirstOrDefault();
+                        var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).ToList();
                         CultureInfo culture = new CultureInfo("es-ES");
                         DateTime getdate = Convert.ToDateTime(order.OrderCreated_at, CultureInfo.CurrentCulture);
                         var year = getdate.Year;
 
-                        if (itemSelect == prodOrder.ProdId)
+                        foreach (var prod in prodOrder)
                         {
-                            if (prodOrder.DiscountedPrice != 0)
+                            if (itemSelect == prod.ProdId)
                             {
-                                price = prodOrder.DiscountedPrice;
-                            }
-                            else if (prodOrder.MemberDiscountedPrice != 0)
-                            {
-                                price = prodOrder.MemberDiscountedPrice;
-                            }
-                            else
-                            {
-                                price = prodOrder.Price;
-                            }
-
-                            if (!date.Contains(year.ToString()))
-                            {
-                                date.Add(year.ToString());
-
-                                viewBy.Add(new ViewBy
+                                if (prod.DiscountedPrice != 0)
                                 {
-                                    ViewByID = year.ToString(),
-                                    TotalSales = price
-                                });
-
-                                if (!prodId.Contains(itemSelect))
+                                    price = prod.DiscountedPrice;
+                                }
+                                else if (prod.MemberDiscountedPrice != 0)
                                 {
+                                    price = prod.MemberDiscountedPrice;
+                                }
+                                else
+                                {
+                                    price = prod.Price;
+                                }
+
+                                if (!date.Contains(year.ToString()))
+                                {
+                                    date.Add(year.ToString());
+                                    var prodCost = db.Cost.Where(x => x.ProdId.ToString() == itemSelect).OrderByDescending(p => p.Id).FirstOrDefault();
+
+                                    viewBy.Add(new ViewBy
+                                    {
+                                        ViewByID = year.ToString(),
+                                        TotalSales = price * prod.Qty,
+                                        TotalCost = prodCost.Cost * prod.Qty,
+                                    });
+
                                     var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == itemSelect).FirstOrDefault();
 
                                     productSales.Add(new SalesReport2
                                     {
                                         ViewBy = year.ToString(),
+                                        DateBought = order.OrderCreated_at,
                                         ProdID = prodDetails.Id,
                                         ProdImage = prodDetails.Product_image,
                                         ProdName = prodDetails.Product_Name,
-                                        SoldQty = prodOrder.Qty,
-                                        TotalSales = price
+                                        SoldQty = prod.Qty,
+                                        TotalSales = price * prod.Qty
                                     });
                                 }
                                 else
                                 {
-                                    foreach (var prod in productSales)
-                                    {
-                                        if (prod.ProdID.ToString() == itemSelect)
-                                        {
-                                            prod.TotalSales += price;
-
-                                            foreach (var by in viewBy)
-                                            {
-                                                if (prod.ViewBy == by.ViewByID)
-                                                {
-                                                    by.TotalSales += price;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                if (!prodId.Contains(itemSelect))
-                                {
                                     var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == itemSelect).FirstOrDefault();
+                                    var prodCost = db.Cost.Where(x => x.ProdId.ToString() == itemSelect).OrderByDescending(p => p.Id).FirstOrDefault();
 
                                     productSales.Add(new SalesReport2
                                     {
                                         ViewBy = year.ToString(),
+                                        DateBought = order.OrderCreated_at,
                                         ProdID = prodDetails.Id,
                                         ProdImage = prodDetails.Product_image,
                                         ProdName = prodDetails.Product_Name,
-                                        SoldQty = prodOrder.Qty,
-                                        TotalSales = price
+                                        SoldQty = prod.Qty,
+                                        TotalSales = price * prod.Qty
                                     });
 
                                     foreach (var by in viewBy)
                                     {
                                         if (by.ViewByID == year.ToString())
                                         {
-                                            by.TotalSales += price;
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    foreach (var prod in productSales)
-                                    {
-                                        if (prod.ProdID.ToString() == itemSelect)
-                                        {
-                                            prod.TotalSales += price;
-
-                                            foreach (var by in viewBy)
-                                            {
-                                                if (prod.ViewBy == by.ViewByID)
-                                                {
-                                                    by.TotalSales += price;
-                                                }
-                                            }
+                                            by.TotalSales += price * prod.Qty;
+                                            by.TotalCost += prodCost.Cost * prod.Qty;
                                         }
                                     }
                                 }
                             }
+                        
                         }
                     }
                 }
@@ -5700,110 +5685,77 @@ namespace PCartWeb.Controllers
                 {
                     foreach (var order in userOrders)
                     {
-                        var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).FirstOrDefault();
+                        var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).ToList();
                         CultureInfo culture = new CultureInfo("es-ES");
                         DateTime getdate = Convert.ToDateTime(order.OrderCreated_at, CultureInfo.CurrentCulture);
                         var month = getdate.Month;
                         var year = getdate.Year;
                         var monthName = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month);
 
-                        if (itemSelect == prodOrder.ProdId)
+                        foreach (var prod in prodOrder)
                         {
-                            if (prodOrder.DiscountedPrice != 0)
+                            if (itemSelect == prod.ProdId)
                             {
-                                price = prodOrder.DiscountedPrice;
-                            }
-                            else if (prodOrder.MemberDiscountedPrice != 0)
-                            {
-                                price = prodOrder.MemberDiscountedPrice;
-                            }
-                            else
-                            {
-                                price = prodOrder.Price;
-                            }
-
-                            if (!date.Contains(monthName + " " + year.ToString()))
-                            {
-                                date.Add(monthName + " " + year.ToString());
-
-                                viewBy.Add(new ViewBy
+                                if (prod.DiscountedPrice != 0)
                                 {
-                                    ViewByID = monthName + " " + year.ToString(),
-                                    TotalSales = price
-                                });
-
-                                if (!prodId.Contains(itemSelect))
+                                    price = prod.DiscountedPrice;
+                                }
+                                else if (prod.MemberDiscountedPrice != 0)
                                 {
+                                    price = prod.MemberDiscountedPrice;
+                                }
+                                else
+                                {
+                                    price = prod.Price;
+                                }
+
+                                if (!date.Contains(monthName + " " + year.ToString()))
+                                {
+                                    date.Add(monthName + " " + year.ToString());
+                                    var prodCost = db.Cost.Where(x => x.ProdId.ToString() == itemSelect).OrderByDescending(p => p.Id).FirstOrDefault();
+
+                                    viewBy.Add(new ViewBy
+                                    {
+                                        ViewByID = monthName + " " + year.ToString(),
+                                        TotalSales = price * prod.Qty,
+                                        TotalCost = prodCost.Cost * prod.Qty,
+                                    });
+
                                     var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == itemSelect).FirstOrDefault();
 
                                     productSales.Add(new SalesReport2
                                     {
                                         ViewBy = monthName + " " + year.ToString(),
+                                        DateBought = order.OrderCreated_at,
                                         ProdID = prodDetails.Id,
                                         ProdImage = prodDetails.Product_image,
                                         ProdName = prodDetails.Product_Name,
-                                        SoldQty = prodOrder.Qty,
-                                        TotalSales = price
+                                        SoldQty = prod.Qty,
+                                        TotalSales = price * prod.Qty
                                     });
                                 }
                                 else
                                 {
-                                    foreach (var prod in productSales)
-                                    {
-                                        if (prod.ProdID.ToString() == itemSelect)
-                                        {
-                                            prod.TotalSales += price;
-
-                                            foreach (var by in viewBy)
-                                            {
-                                                if (prod.ViewBy == by.ViewByID)
-                                                {
-                                                    by.TotalSales += price;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                if (!prodId.Contains(itemSelect))
-                                {
                                     var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == itemSelect).FirstOrDefault();
+                                    var prodCost = db.Cost.Where(x => x.ProdId.ToString() == itemSelect).OrderByDescending(p => p.Id).FirstOrDefault();
 
                                     productSales.Add(new SalesReport2
                                     {
                                         ViewBy = monthName + " " + year.ToString(),
+                                        DateBought = order.OrderCreated_at,
                                         ProdID = prodDetails.Id,
                                         ProdImage = prodDetails.Product_image,
                                         ProdName = prodDetails.Product_Name,
-                                        SoldQty = prodOrder.Qty,
-                                        TotalSales = price
+                                        SoldQty = prod.Qty,
+                                        TotalSales = price * prod.Qty
                                     });
 
                                     foreach (var by in viewBy)
                                     {
                                         if (by.ViewByID == monthName + " " + year.ToString())
                                         {
-                                            by.TotalSales += price;
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    foreach (var prod in productSales)
-                                    {
-                                        if (prod.ProdID.ToString() == itemSelect)
-                                        {
-                                            prod.TotalSales += price;
-
-                                            foreach (var by in viewBy)
-                                            {
-                                                if (prod.ViewBy == by.ViewByID)
-                                                {
-                                                    by.TotalSales += price;
-                                                }
-                                            }
+                                            by.TotalSales += price * prod.Qty;
+                                            by.TotalCost += prodCost.Cost * prod.Qty;
                                         }
                                     }
                                 }
@@ -5822,7 +5774,7 @@ namespace PCartWeb.Controllers
                 {
                     foreach (var order in userOrders)
                     {
-                        var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).FirstOrDefault();
+                        var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).ToList();
                         CultureInfo culture = new CultureInfo("es-ES");
                         DateTime getdate = Convert.ToDateTime(order.OrderCreated_at, CultureInfo.CurrentCulture);
                         var week = GetWeekNumberOfMonth(getdate);
@@ -5830,103 +5782,70 @@ namespace PCartWeb.Controllers
                         var year = getdate.Year;
                         var monthName = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month);
 
-                        if (itemSelect == prodOrder.ProdId)
+                        foreach (var prod in prodOrder)
                         {
-                            if (prodOrder.DiscountedPrice != 0)
+                            if (itemSelect == prod.ProdId)
                             {
-                                price = prodOrder.DiscountedPrice;
-                            }
-                            else if (prodOrder.MemberDiscountedPrice != 0)
-                            {
-                                price = prodOrder.MemberDiscountedPrice;
-                            }
-                            else
-                            {
-                                price = prodOrder.Price;
-                            }
-
-                            if (!date.Contains("Week " + week + " of " + monthName + " " + year.ToString()))
-                            {
-                                date.Add("Week " + week + " of " + monthName + " " + year.ToString());
-
-                                viewBy.Add(new ViewBy
+                                if (prod.DiscountedPrice != 0)
                                 {
-                                    ViewByID = "Week " + week + " of " + monthName + " " + year.ToString(),
-                                    TotalSales = price
-                                });
-
-                                if (!prodId.Contains(itemSelect))
+                                    price = prod.DiscountedPrice;
+                                }
+                                else if (prod.MemberDiscountedPrice != 0)
                                 {
+                                    price = prod.MemberDiscountedPrice;
+                                }
+                                else
+                                {
+                                    price = prod.Price;
+                                }
+
+                                if (!date.Contains("Week " + week + " of " + monthName + " " + year.ToString()))
+                                {
+                                    date.Add("Week " + week + " of " + monthName + " " + year.ToString());
+                                    var prodCost = db.Cost.Where(x => x.ProdId.ToString() == itemSelect).OrderByDescending(p => p.Id).FirstOrDefault();
+
+                                    viewBy.Add(new ViewBy
+                                    {
+                                        ViewByID = "Week " + week + " of " + monthName + " " + year.ToString(),
+                                        TotalSales = price * prod.Qty,
+                                        TotalCost = prodCost.Cost * prod.Qty,
+                                    });
+
                                     var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == itemSelect).FirstOrDefault();
 
                                     productSales.Add(new SalesReport2
                                     {
                                         ViewBy = "Week " + week + " of " + monthName + " " + year.ToString(),
+                                        DateBought = order.OrderCreated_at,
                                         ProdID = prodDetails.Id,
                                         ProdImage = prodDetails.Product_image,
                                         ProdName = prodDetails.Product_Name,
-                                        SoldQty = prodOrder.Qty,
-                                        TotalSales = price
+                                        SoldQty = prod.Qty,
+                                        TotalSales = price * prod.Qty
                                     });
                                 }
                                 else
                                 {
-                                    foreach (var prod in productSales)
-                                    {
-                                        if (prod.ProdID.ToString() == itemSelect)
-                                        {
-                                            prod.TotalSales += price;
-
-                                            foreach (var by in viewBy)
-                                            {
-                                                if (prod.ViewBy == by.ViewByID)
-                                                {
-                                                    by.TotalSales += price;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                if (!prodId.Contains(itemSelect))
-                                {
                                     var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == itemSelect).FirstOrDefault();
+                                    var prodCost = db.Cost.Where(x => x.ProdId.ToString() == itemSelect).OrderByDescending(p => p.Id).FirstOrDefault();
 
                                     productSales.Add(new SalesReport2
                                     {
                                         ViewBy = "Week " + week + " of " + monthName + " " + year.ToString(),
+                                        DateBought = order.OrderCreated_at,
                                         ProdID = prodDetails.Id,
                                         ProdImage = prodDetails.Product_image,
                                         ProdName = prodDetails.Product_Name,
-                                        SoldQty = prodOrder.Qty,
-                                        TotalSales = price
+                                        SoldQty = prod.Qty,
+                                        TotalSales = price * prod.Qty
                                     });
 
                                     foreach (var by in viewBy)
                                     {
                                         if (by.ViewByID == "Week " + week + " of " + monthName + " " + year.ToString())
                                         {
-                                            by.TotalSales += price;
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    foreach (var prod in productSales)
-                                    {
-                                        if (prod.ProdID.ToString() == itemSelect)
-                                        {
-                                            prod.TotalSales += price;
-
-                                            foreach (var by in viewBy)
-                                            {
-                                                if (prod.ViewBy == by.ViewByID)
-                                                {
-                                                    by.TotalSales += price;
-                                                }
-                                            }
+                                            by.TotalSales += price * prod.Qty;
+                                            by.TotalCost += prodCost.Cost * prod.Qty;
                                         }
                                     }
                                 }
@@ -5945,111 +5864,78 @@ namespace PCartWeb.Controllers
                 {
                     foreach (var order in userOrders)
                     {
-                        var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).FirstOrDefault();
+                        var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).ToList();
                         CultureInfo culture = new CultureInfo("es-ES");
                         DateTime getdate = Convert.ToDateTime(order.OrderCreated_at, CultureInfo.CurrentCulture);
                         DateTime startDate = Convert.ToDateTime(model.DateStart, culture);
                         DateTime endDate = Convert.ToDateTime(model.DateEnd, culture);
-
-                        if (getdate >= startDate && getdate <= endDate)
+                        
+                        if (getdate.Date >= startDate.Date && getdate.Date <= endDate.Date)
                         {
-                            if (itemSelect == prodOrder.ProdId)
+                            foreach (var prod in prodOrder)
                             {
-                                if (prodOrder.DiscountedPrice != 0)
+                                if (itemSelect == prod.ProdId)
                                 {
-                                    price = prodOrder.DiscountedPrice;
-                                }
-                                else if (prodOrder.MemberDiscountedPrice != 0)
-                                {
-                                    price = prodOrder.MemberDiscountedPrice;
-                                }
-                                else
-                                {
-                                    price = prodOrder.Price;
-                                }
-
-                                if (!date.Contains(getdate.ToString()))
-                                {
-                                    date.Add(getdate.ToString());
-
-                                    viewBy.Add(new ViewBy
+                                    if (prod.DiscountedPrice != 0)
                                     {
-                                        ViewByID = getdate.ToString(),
-                                        TotalSales = price
-                                    });
-
-                                    if (!prodId.Contains(itemSelect))
+                                        price = prod.DiscountedPrice;
+                                    }
+                                    else if (prod.MemberDiscountedPrice != 0)
                                     {
+                                        price = prod.MemberDiscountedPrice;
+                                    }
+                                    else
+                                    {
+                                        price = prod.Price;
+                                    }
+
+                                    if (!date.Contains(getdate.Date.ToString("MM/dd/yyyy")))
+                                    {
+                                        date.Add(getdate.Date.ToString("MM/dd/yyyy"));
+                                        var prodCost = db.Cost.Where(x => x.ProdId.ToString() == itemSelect).OrderByDescending(p => p.Id).FirstOrDefault();
+
+                                        viewBy.Add(new ViewBy
+                                        {
+                                            ViewByID = getdate.Date.ToString("MM/dd/yyyy"),
+                                            TotalSales = price * prod.Qty,
+                                            TotalCost = prodCost.Cost * prod.Qty,
+                                        });
+
                                         var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == itemSelect).FirstOrDefault();
 
                                         productSales.Add(new SalesReport2
                                         {
-                                            ViewBy = getdate.ToString(),
+                                            ViewBy = getdate.Date.ToString("MM/dd/yyyy"),
+                                            DateBought = order.OrderCreated_at,
                                             ProdID = prodDetails.Id,
                                             ProdImage = prodDetails.Product_image,
                                             ProdName = prodDetails.Product_Name,
-                                            SoldQty = prodOrder.Qty,
-                                            TotalSales = price
+                                            SoldQty = prod.Qty,
+                                            TotalSales = price * prod.Qty
                                         });
                                     }
                                     else
                                     {
-                                        foreach (var prod in productSales)
-                                        {
-                                            if (prod.ProdID.ToString() == itemSelect)
-                                            {
-                                                prod.TotalSales += price;
-
-                                                foreach (var by in viewBy)
-                                                {
-                                                    if (prod.ViewBy == by.ViewByID)
-                                                    {
-                                                        by.TotalSales += price;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    if (!prodId.Contains(itemSelect))
-                                    {
                                         var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == itemSelect).FirstOrDefault();
+                                        var prodCost = db.Cost.Where(x => x.ProdId.ToString() == itemSelect).OrderByDescending(p => p.Id).FirstOrDefault();
 
                                         productSales.Add(new SalesReport2
                                         {
-                                            ViewBy = getdate.ToString(),
+                                            ViewBy = getdate.Date.ToString("MM/dd/yyyy"),
+                                            DateBought = order.OrderCreated_at,
                                             ProdID = prodDetails.Id,
                                             ProdImage = prodDetails.Product_image,
                                             ProdName = prodDetails.Product_Name,
-                                            SoldQty = prodOrder.Qty,
-                                            TotalSales = price
+                                            SoldQty = prod.Qty,
+                                            TotalSales = price * prod.Qty
                                         });
 
                                         foreach (var by in viewBy)
                                         {
-                                            if (by.ViewByID == getdate.ToString())
+                                            if (by.ViewByID == getdate.Date.ToString("MM/dd/yyyy"))
                                             {
-                                                by.TotalSales += price;
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        foreach (var prod in productSales)
-                                        {
-                                            if (prod.ProdID.ToString() == itemSelect)
-                                            {
-                                                prod.TotalSales += price;
-
-                                                foreach (var by in viewBy)
-                                                {
-                                                    if (prod.ViewBy == by.ViewByID)
-                                                    {
-                                                        by.TotalSales += price;
-                                                    }
-                                                }
+                                                by.TotalSales += price * prod.Qty;
+                                                by.TotalCost += prodCost.Cost * prod.Qty;
                                             }
                                         }
                                     }
@@ -6094,6 +5980,14 @@ namespace PCartWeb.Controllers
             List<string> date = new List<string>();
             List<string> prodId = new List<string>();
             decimal price = 0;
+            var userid = User.Identity.GetUserId();
+            var coopdadmin = db.CoopAdminDetails.Where(x => x.UserId == userid).FirstOrDefault();
+            if (coopdadmin != null)
+            {
+                var coopdetail = db.CoopDetails.Where(x => x.Id == coopdadmin.Coop_code).FirstOrDefault();
+                model.CoopName = coopdetail.CoopName;
+                model.CoopLogo = coopdetail.CoopLogo;
+            }
 
             try
             {
@@ -6103,112 +5997,80 @@ namespace PCartWeb.Controllers
                     {
                         foreach (var order in userOrders)
                         {
-                            var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).FirstOrDefault();
+                            var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).ToList();
                             CultureInfo culture = new CultureInfo("es-ES");
                             DateTime getdate = Convert.ToDateTime(order.OrderCreated_at, CultureInfo.CurrentCulture);
                             var year = getdate.Year;
 
-                            if (itemSelect == prodOrder.ProdId)
+                            foreach (var prod in prodOrder)
                             {
-                                if (prodOrder.DiscountedPrice != 0)
+                                if (itemSelect == prod.ProdId)
                                 {
-                                    price = prodOrder.DiscountedPrice;
-                                }
-                                else if (prodOrder.MemberDiscountedPrice != 0)
-                                {
-                                    price = prodOrder.MemberDiscountedPrice;
-                                }
-                                else
-                                {
-                                    price = prodOrder.Price;
-                                }
-
-                                if (!date.Contains(year.ToString()))
-                                {
-                                    date.Add(year.ToString());
-
-                                    viewBy.Add(new ViewBy
+                                    if (prod.DiscountedPrice != 0)
                                     {
-                                        ViewByID = year.ToString(),
-                                        TotalSales = price
-                                    });
-
-                                    if (!prodId.Contains(itemSelect))
+                                        price = prod.DiscountedPrice;
+                                    }
+                                    else if (prod.MemberDiscountedPrice != 0)
                                     {
+                                        price = prod.MemberDiscountedPrice;
+                                    }
+                                    else
+                                    {
+                                        price = prod.Price;
+                                    }
+
+                                    if (!date.Contains(year.ToString()))
+                                    {
+                                        date.Add(year.ToString());
+                                        var prodCost = db.Cost.Where(x => x.ProdId.ToString() == itemSelect).OrderByDescending(p => p.Id).FirstOrDefault();
+                                        
+                                        viewBy.Add(new ViewBy
+                                        {
+                                            ViewByID = year.ToString(),
+                                            TotalSales = price * prod.Qty,
+                                            TotalCost = prodCost.Cost * prod.Qty,
+                                        });
+
                                         var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == itemSelect).FirstOrDefault();
 
                                         productSales.Add(new SalesReport2
                                         {
                                             ViewBy = year.ToString(),
+                                            DateBought = order.OrderCreated_at,
                                             ProdID = prodDetails.Id,
                                             ProdImage = prodDetails.Product_image,
                                             ProdName = prodDetails.Product_Name,
-                                            SoldQty = prodOrder.Qty,
-                                            TotalSales = price
+                                            SoldQty = prod.Qty,
+                                            TotalSales = price * prod.Qty
                                         });
                                     }
                                     else
                                     {
-                                        foreach (var prod in productSales)
-                                        {
-                                            if (prod.ProdID.ToString() == itemSelect)
-                                            {
-                                                prod.TotalSales += price;
-
-                                                foreach (var by in viewBy)
-                                                {
-                                                    if (prod.ViewBy == by.ViewByID)
-                                                    {
-                                                        by.TotalSales += price;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    if (!prodId.Contains(itemSelect))
-                                    {
                                         var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == itemSelect).FirstOrDefault();
+                                        var prodCost = db.Cost.Where(x => x.ProdId.ToString() == itemSelect).OrderByDescending(p => p.Id).FirstOrDefault();
 
                                         productSales.Add(new SalesReport2
                                         {
                                             ViewBy = year.ToString(),
+                                            DateBought = order.OrderCreated_at,
                                             ProdID = prodDetails.Id,
                                             ProdImage = prodDetails.Product_image,
                                             ProdName = prodDetails.Product_Name,
-                                            SoldQty = prodOrder.Qty,
-                                            TotalSales = price
+                                            SoldQty = prod.Qty,
+                                            TotalSales = price * prod.Qty
                                         });
 
                                         foreach (var by in viewBy)
                                         {
                                             if (by.ViewByID == year.ToString())
                                             {
-                                                by.TotalSales += price;
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        foreach (var prod in productSales)
-                                        {
-                                            if (prod.ProdID.ToString() == itemSelect)
-                                            {
-                                                prod.TotalSales += price;
-
-                                                foreach (var by in viewBy)
-                                                {
-                                                    if (prod.ViewBy == by.ViewByID)
-                                                    {
-                                                        by.TotalSales += price;
-                                                    }
-                                                }
+                                                by.TotalSales += price * prod.Qty;
+                                                by.TotalCost += prodCost.Cost * prod.Qty;
                                             }
                                         }
                                     }
                                 }
+
                             }
                         }
                     }
@@ -6223,110 +6085,77 @@ namespace PCartWeb.Controllers
                     {
                         foreach (var order in userOrders)
                         {
-                            var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).FirstOrDefault();
+                            var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).ToList();
                             CultureInfo culture = new CultureInfo("es-ES");
                             DateTime getdate = Convert.ToDateTime(order.OrderCreated_at, CultureInfo.CurrentCulture);
                             var month = getdate.Month;
                             var year = getdate.Year;
                             var monthName = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month);
 
-                            if (itemSelect == prodOrder.ProdId)
+                            foreach (var prod in prodOrder)
                             {
-                                if (prodOrder.DiscountedPrice != 0)
+                                if (itemSelect == prod.ProdId)
                                 {
-                                    price = prodOrder.DiscountedPrice;
-                                }
-                                else if (prodOrder.MemberDiscountedPrice != 0)
-                                {
-                                    price = prodOrder.MemberDiscountedPrice;
-                                }
-                                else
-                                {
-                                    price = prodOrder.Price;
-                                }
-
-                                if (!date.Contains(monthName + " " + year.ToString()))
-                                {
-                                    date.Add(monthName + " " + year.ToString());
-
-                                    viewBy.Add(new ViewBy
+                                    if (prod.DiscountedPrice != 0)
                                     {
-                                        ViewByID = monthName + " " + year.ToString(),
-                                        TotalSales = price
-                                    });
-
-                                    if (!prodId.Contains(itemSelect))
+                                        price = prod.DiscountedPrice;
+                                    }
+                                    else if (prod.MemberDiscountedPrice != 0)
                                     {
+                                        price = prod.MemberDiscountedPrice;
+                                    }
+                                    else
+                                    {
+                                        price = prod.Price;
+                                    }
+
+                                    if (!date.Contains(monthName + " " + year.ToString()))
+                                    {
+                                        date.Add(monthName + " " + year.ToString());
+                                        var prodCost = db.Cost.Where(x => x.ProdId.ToString() == itemSelect).OrderByDescending(p => p.Id).FirstOrDefault();
+
+                                        viewBy.Add(new ViewBy
+                                        {
+                                            ViewByID = monthName + " " + year.ToString(),
+                                            TotalSales = price * prod.Qty,
+                                            TotalCost = prodCost.Cost * prod.Qty,
+                                        });
+
                                         var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == itemSelect).FirstOrDefault();
 
                                         productSales.Add(new SalesReport2
                                         {
                                             ViewBy = monthName + " " + year.ToString(),
+                                            DateBought = order.OrderCreated_at,
                                             ProdID = prodDetails.Id,
                                             ProdImage = prodDetails.Product_image,
                                             ProdName = prodDetails.Product_Name,
-                                            SoldQty = prodOrder.Qty,
-                                            TotalSales = price
+                                            SoldQty = prod.Qty,
+                                            TotalSales = price * prod.Qty
                                         });
                                     }
                                     else
                                     {
-                                        foreach (var prod in productSales)
-                                        {
-                                            if (prod.ProdID.ToString() == itemSelect)
-                                            {
-                                                prod.TotalSales += price;
-
-                                                foreach (var by in viewBy)
-                                                {
-                                                    if (prod.ViewBy == by.ViewByID)
-                                                    {
-                                                        by.TotalSales += price;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    if (!prodId.Contains(itemSelect))
-                                    {
                                         var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == itemSelect).FirstOrDefault();
+                                        var prodCost = db.Cost.Where(x => x.ProdId.ToString() == itemSelect).OrderByDescending(p => p.Id).FirstOrDefault();
 
                                         productSales.Add(new SalesReport2
                                         {
                                             ViewBy = monthName + " " + year.ToString(),
+                                            DateBought = order.OrderCreated_at,
                                             ProdID = prodDetails.Id,
                                             ProdImage = prodDetails.Product_image,
                                             ProdName = prodDetails.Product_Name,
-                                            SoldQty = prodOrder.Qty,
-                                            TotalSales = price
+                                            SoldQty = prod.Qty,
+                                            TotalSales = price * prod.Qty
                                         });
 
                                         foreach (var by in viewBy)
                                         {
                                             if (by.ViewByID == monthName + " " + year.ToString())
                                             {
-                                                by.TotalSales += price;
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        foreach (var prod in productSales)
-                                        {
-                                            if (prod.ProdID.ToString() == itemSelect)
-                                            {
-                                                prod.TotalSales += price;
-
-                                                foreach (var by in viewBy)
-                                                {
-                                                    if (prod.ViewBy == by.ViewByID)
-                                                    {
-                                                        by.TotalSales += price;
-                                                    }
-                                                }
+                                                by.TotalSales += price * prod.Qty;
+                                                by.TotalCost += prodCost.Cost * prod.Qty;
                                             }
                                         }
                                     }
@@ -6345,7 +6174,7 @@ namespace PCartWeb.Controllers
                     {
                         foreach (var order in userOrders)
                         {
-                            var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).FirstOrDefault();
+                            var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).ToList();
                             CultureInfo culture = new CultureInfo("es-ES");
                             DateTime getdate = Convert.ToDateTime(order.OrderCreated_at, CultureInfo.CurrentCulture);
                             var week = GetWeekNumberOfMonth(getdate);
@@ -6353,103 +6182,70 @@ namespace PCartWeb.Controllers
                             var year = getdate.Year;
                             var monthName = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month);
 
-                            if (itemSelect == prodOrder.ProdId)
+                            foreach (var prod in prodOrder)
                             {
-                                if (prodOrder.DiscountedPrice != 0)
+                                if (itemSelect == prod.ProdId)
                                 {
-                                    price = prodOrder.DiscountedPrice;
-                                }
-                                else if (prodOrder.MemberDiscountedPrice != 0)
-                                {
-                                    price = prodOrder.MemberDiscountedPrice;
-                                }
-                                else
-                                {
-                                    price = prodOrder.Price;
-                                }
-
-                                if (!date.Contains("Week " + week + " of " + monthName + " " + year.ToString()))
-                                {
-                                    date.Add("Week " + week + " of " + monthName + " " + year.ToString());
-
-                                    viewBy.Add(new ViewBy
+                                    if (prod.DiscountedPrice != 0)
                                     {
-                                        ViewByID = "Week " + week + " of " + monthName + " " + year.ToString(),
-                                        TotalSales = price
-                                    });
-
-                                    if (!prodId.Contains(itemSelect))
+                                        price = prod.DiscountedPrice;
+                                    }
+                                    else if (prod.MemberDiscountedPrice != 0)
                                     {
+                                        price = prod.MemberDiscountedPrice;
+                                    }
+                                    else
+                                    {
+                                        price = prod.Price;
+                                    }
+
+                                    if (!date.Contains("Week " + week + " of " + monthName + " " + year.ToString()))
+                                    {
+                                        date.Add("Week " + week + " of " + monthName + " " + year.ToString());
+                                        var prodCost = db.Cost.Where(x => x.ProdId.ToString() == itemSelect).OrderByDescending(p => p.Id).FirstOrDefault();
+
+                                        viewBy.Add(new ViewBy
+                                        {
+                                            ViewByID = "Week " + week + " of " + monthName + " " + year.ToString(),
+                                            TotalSales = price * prod.Qty,
+                                            TotalCost = prodCost.Cost * prod.Qty,
+                                        });
+
                                         var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == itemSelect).FirstOrDefault();
 
                                         productSales.Add(new SalesReport2
                                         {
                                             ViewBy = "Week " + week + " of " + monthName + " " + year.ToString(),
+                                            DateBought = order.OrderCreated_at,
                                             ProdID = prodDetails.Id,
                                             ProdImage = prodDetails.Product_image,
                                             ProdName = prodDetails.Product_Name,
-                                            SoldQty = prodOrder.Qty,
-                                            TotalSales = price
+                                            SoldQty = prod.Qty,
+                                            TotalSales = price * prod.Qty
                                         });
                                     }
                                     else
                                     {
-                                        foreach (var prod in productSales)
-                                        {
-                                            if (prod.ProdID.ToString() == itemSelect)
-                                            {
-                                                prod.TotalSales += price;
-
-                                                foreach (var by in viewBy)
-                                                {
-                                                    if (prod.ViewBy == by.ViewByID)
-                                                    {
-                                                        by.TotalSales += price;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    if (!prodId.Contains(itemSelect))
-                                    {
                                         var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == itemSelect).FirstOrDefault();
+                                        var prodCost = db.Cost.Where(x => x.ProdId.ToString() == itemSelect).OrderByDescending(p => p.Id).FirstOrDefault();
 
                                         productSales.Add(new SalesReport2
                                         {
                                             ViewBy = "Week " + week + " of " + monthName + " " + year.ToString(),
+                                            DateBought = order.OrderCreated_at,
                                             ProdID = prodDetails.Id,
                                             ProdImage = prodDetails.Product_image,
                                             ProdName = prodDetails.Product_Name,
-                                            SoldQty = prodOrder.Qty,
-                                            TotalSales = price
+                                            SoldQty = prod.Qty,
+                                            TotalSales = price * prod.Qty
                                         });
 
                                         foreach (var by in viewBy)
                                         {
                                             if (by.ViewByID == "Week " + week + " of " + monthName + " " + year.ToString())
                                             {
-                                                by.TotalSales += price;
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        foreach (var prod in productSales)
-                                        {
-                                            if (prod.ProdID.ToString() == itemSelect)
-                                            {
-                                                prod.TotalSales += price;
-
-                                                foreach (var by in viewBy)
-                                                {
-                                                    if (prod.ViewBy == by.ViewByID)
-                                                    {
-                                                        by.TotalSales += price;
-                                                    }
-                                                }
+                                                by.TotalSales += price * prod.Qty;
+                                                by.TotalCost += prodCost.Cost * prod.Qty;
                                             }
                                         }
                                     }
@@ -6468,111 +6264,78 @@ namespace PCartWeb.Controllers
                     {
                         foreach (var order in userOrders)
                         {
-                            var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).FirstOrDefault();
+                            var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).ToList();
                             CultureInfo culture = new CultureInfo("es-ES");
                             DateTime getdate = Convert.ToDateTime(order.OrderCreated_at, CultureInfo.CurrentCulture);
                             DateTime startDate = Convert.ToDateTime(date1, culture);
                             DateTime endDate = Convert.ToDateTime(date2, culture);
 
-                            if (getdate >= startDate && getdate <= endDate)
+                            if (getdate.Date >= startDate.Date && getdate.Date <= endDate.Date)
                             {
-                                if (itemSelect == prodOrder.ProdId)
+                                foreach (var prod in prodOrder)
                                 {
-                                    if (prodOrder.DiscountedPrice != 0)
+                                    if (itemSelect == prod.ProdId)
                                     {
-                                        price = prodOrder.DiscountedPrice;
-                                    }
-                                    else if (prodOrder.MemberDiscountedPrice != 0)
-                                    {
-                                        price = prodOrder.MemberDiscountedPrice;
-                                    }
-                                    else
-                                    {
-                                        price = prodOrder.Price;
-                                    }
-
-                                    if (!date.Contains(getdate.ToString()))
-                                    {
-                                        date.Add(getdate.ToString());
-
-                                        viewBy.Add(new ViewBy
+                                        if (prod.DiscountedPrice != 0)
                                         {
-                                            ViewByID = getdate.ToString(),
-                                            TotalSales = price
-                                        });
-
-                                        if (!prodId.Contains(itemSelect))
+                                            price = prod.DiscountedPrice;
+                                        }
+                                        else if (prod.MemberDiscountedPrice != 0)
                                         {
+                                            price = prod.MemberDiscountedPrice;
+                                        }
+                                        else
+                                        {
+                                            price = prod.Price;
+                                        }
+
+                                        if (!date.Contains(getdate.Date.ToString("MM/dd/yyyy")))
+                                        {
+                                            date.Add(getdate.Date.ToString("MM/dd/yyyy"));
+                                            var prodCost = db.Cost.Where(x => x.ProdId.ToString() == itemSelect).OrderByDescending(p => p.Id).FirstOrDefault();
+
+                                            viewBy.Add(new ViewBy
+                                            {
+                                                ViewByID = getdate.Date.ToString("MM/dd/yyyy"),
+                                                TotalSales = price * prod.Qty,
+                                                TotalCost = prodCost.Cost * prod.Qty,
+                                            });
+
                                             var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == itemSelect).FirstOrDefault();
 
                                             productSales.Add(new SalesReport2
                                             {
-                                                ViewBy = getdate.ToString(),
+                                                ViewBy = getdate.Date.ToString("MM/dd/yyyy"),
+                                                DateBought = order.OrderCreated_at,
                                                 ProdID = prodDetails.Id,
                                                 ProdImage = prodDetails.Product_image,
                                                 ProdName = prodDetails.Product_Name,
-                                                SoldQty = prodOrder.Qty,
-                                                TotalSales = price
+                                                SoldQty = prod.Qty,
+                                                TotalSales = price * prod.Qty
                                             });
                                         }
                                         else
                                         {
-                                            foreach (var prod in productSales)
-                                            {
-                                                if (prod.ProdID.ToString() == itemSelect)
-                                                {
-                                                    prod.TotalSales += price;
-
-                                                    foreach (var by in viewBy)
-                                                    {
-                                                        if (prod.ViewBy == by.ViewByID)
-                                                        {
-                                                            by.TotalSales += price;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (!prodId.Contains(itemSelect))
-                                        {
                                             var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == itemSelect).FirstOrDefault();
+                                            var prodCost = db.Cost.Where(x => x.ProdId.ToString() == itemSelect).OrderByDescending(p => p.Id).FirstOrDefault();
 
                                             productSales.Add(new SalesReport2
                                             {
-                                                ViewBy = getdate.ToString(),
+                                                ViewBy = getdate.Date.ToString("MM/dd/yyyy"),
+                                                DateBought = order.OrderCreated_at,
                                                 ProdID = prodDetails.Id,
                                                 ProdImage = prodDetails.Product_image,
                                                 ProdName = prodDetails.Product_Name,
-                                                SoldQty = prodOrder.Qty,
-                                                TotalSales = price
+                                                SoldQty = prod.Qty,
+                                                TotalSales = price * prod.Qty
                                             });
 
                                             foreach (var by in viewBy)
                                             {
-                                                if (by.ViewByID == getdate.ToString())
+                                                if (by.ViewByID == getdate.Date.ToString("MM/dd/yyyy"))
                                                 {
-                                                    by.TotalSales += price;
-                                                }
-                                            }
-                                        }
-                                        else
-                                        {
-                                            foreach (var prod in productSales)
-                                            {
-                                                if (prod.ProdID.ToString() == itemSelect)
-                                                {
-                                                    prod.TotalSales += price;
-
-                                                    foreach (var by in viewBy)
-                                                    {
-                                                        if (prod.ViewBy == by.ViewByID)
-                                                        {
-                                                            by.TotalSales += price;
-                                                        }
-                                                    }
+                                                    by.TotalSales += price * prod.Qty;
+                                                    by.TotalCost += prodCost.Cost * prod.Qty;
                                                 }
                                             }
                                         }

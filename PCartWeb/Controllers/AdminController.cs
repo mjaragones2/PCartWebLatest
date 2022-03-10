@@ -1265,7 +1265,7 @@ namespace PCartWeb.Controllers
         public ActionResult ViewCoopSales(ViewSalesReport model)
         {
             var db = new ApplicationDbContext();
-            string selected = Request.Form["isCheck"].ToString();
+            string selected = Request.Form["ProdIDS"];
             string[] selectedCoop = selected.Split(',');
             var date1 = model.DateStart;
             var date2 = model.DateEnd;
@@ -1276,7 +1276,6 @@ namespace PCartWeb.Controllers
             List<string> coopId = new List<string>();
             List<string> prodId = new List<string>();
             decimal price = 0;
-            var coop_id = 0;
 
             if (model.ViewBy != null)
             {
@@ -1302,113 +1301,82 @@ namespace PCartWeb.Controllers
 
                         foreach (var order in userOrders)
                         {
-                            var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).FirstOrDefault();
+                            var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).ToList();
                             CultureInfo culture = new CultureInfo("es-ES");
                             DateTime getdate = Convert.ToDateTime(order.OrderCreated_at, CultureInfo.CurrentCulture);
                             var year = getdate.Year;
-
-                            if (prodOrder.ProdId == coopProd.Id.ToString())
+                            
+                            foreach (var prod in prodOrder)
                             {
-                                if (prodOrder.DiscountedPrice != 0)
+                                if (prod.ProdId == coopProd.Id.ToString())
                                 {
-                                    price = prodOrder.DiscountedPrice;
-                                }
-                                else if (prodOrder.MemberDiscountedPrice != 0)
-                                {
-                                    price = prodOrder.MemberDiscountedPrice;
-                                }
-                                else
-                                {
-                                    price = prodOrder.Price;
-                                }
-
-                                if (!date.Contains(year.ToString()) || !coopId.Contains(coop))
-                                {
-                                    date.Add(year.ToString());
-                                    coopId.Add(coop);
-                                    var coopDetails = db.CoopDetails.Where(c => c.Id == order.CoopId).FirstOrDefault();
-
-                                    viewBy.Add(new ViewBy
+                                    if (prod.DiscountedPrice != 0)
                                     {
-                                        ViewByID = year.ToString(),
-                                        CoopId = coopDetails.Id.ToString(),
-                                        CoopName = coopDetails.CoopName,
-                                        TotalSales = price
-                                    });
-
-                                    if (!prodId.Contains(coopProd.Id.ToString()))
+                                        price = prod.DiscountedPrice;
+                                    }
+                                    else if (prod.MemberDiscountedPrice != 0)
                                     {
+                                        price = prod.MemberDiscountedPrice;
+                                    }
+                                    else
+                                    {
+                                        price = prod.Price;
+                                    }
+
+                                    if (!date.Contains(year.ToString()) || !coopId.Contains(coop))
+                                    {
+                                        date.Add(year.ToString());
+                                        coopId.Add(coop);
+                                        var coopDetails = db.CoopDetails.Where(c => c.Id == order.CoopId).FirstOrDefault();
+                                        var prodCost = db.Cost.Where(x => x.ProdId == coopProd.Id).OrderByDescending(p => p.Id).FirstOrDefault();
+
+                                        viewBy.Add(new ViewBy
+                                        {
+                                            Cooplogo = coopDetails.CoopLogo,
+                                            ViewByID = year.ToString(),
+                                            CoopId = coopDetails.Id.ToString(),
+                                            CoopName = coopDetails.CoopName,
+                                            TotalSales = price * prod.Qty,
+                                            TotalCost = prodCost.Cost * prod.Qty,
+                                        });
+
                                         var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == coopProd.Id.ToString()).FirstOrDefault();
 
                                         productSales.Add(new SalesReport2
                                         {
                                             ViewBy = year.ToString(),
+                                            DateBought = order.OrderCreated_at,
                                             CoopId = coop,
                                             ProdID = prodDetails.Id,
                                             ProdImage = prodDetails.Product_image,
                                             ProdName = prodDetails.Product_Name,
-                                            SoldQty = prodOrder.Qty,
-                                            TotalSales = price
+                                            SoldQty = prod.Qty,
+                                            TotalSales = price * prod.Qty
                                         });
                                     }
                                     else
                                     {
-                                        foreach (var prod in productSales)
-                                        {
-                                            if (prod.ProdID.ToString() == coopProd.Id.ToString())
-                                            {
-                                                prod.TotalSales += price;
-
-                                                foreach (var by in viewBy)
-                                                {
-                                                    if (prod.ViewBy == by.ViewByID)
-                                                    {
-                                                        by.TotalSales += price;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    if (!prodId.Contains(coopProd.Id.ToString()))
-                                    {
                                         var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == coopProd.Id.ToString()).FirstOrDefault();
+                                        var prodCost = db.Cost.Where(x => x.ProdId == coopProd.Id).OrderByDescending(p => p.Id).FirstOrDefault();
 
                                         productSales.Add(new SalesReport2
                                         {
+                                            CoopId = coop,
                                             ViewBy = year.ToString(),
+                                            DateBought = order.OrderCreated_at,
                                             ProdID = prodDetails.Id,
                                             ProdImage = prodDetails.Product_image,
                                             ProdName = prodDetails.Product_Name,
-                                            SoldQty = prodOrder.Qty,
-                                            TotalSales = price
+                                            SoldQty = prod.Qty,
+                                            TotalSales = price * prod.Qty
                                         });
 
                                         foreach (var by in viewBy)
                                         {
                                             if (by.ViewByID == year.ToString())
                                             {
-                                                by.TotalSales += price;
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        foreach (var prod in productSales)
-                                        {
-                                            if (prod.ProdID.ToString() == coopProd.Id.ToString())
-                                            {
-                                                prod.TotalSales += price;
-
-                                                foreach (var by in viewBy)
-                                                {
-                                                    if (prod.ViewBy == by.ViewByID)
-                                                    {
-                                                        by.TotalSales += price;
-                                                    }
-                                                }
+                                                by.TotalSales += price * prod.Qty;
+                                                by.TotalCost += prodCost.Cost * prod.Qty;
                                             }
                                         }
                                     }
@@ -1435,115 +1403,84 @@ namespace PCartWeb.Controllers
 
                         foreach (var order in userOrders)
                         {
-                            var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).FirstOrDefault();
+                            var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).ToList();
                             CultureInfo culture = new CultureInfo("es-ES");
                             DateTime getdate = Convert.ToDateTime(order.OrderCreated_at, CultureInfo.CurrentCulture);
                             var month = getdate.Month;
                             var year = getdate.Year;
                             var monthName = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month);
 
-                            if (prodOrder.ProdId == coopProd.Id.ToString())
+                            foreach (var prod in prodOrder)
                             {
-                                if (prodOrder.DiscountedPrice != 0)
+                                if (prod.ProdId == coopProd.Id.ToString())
                                 {
-                                    price = prodOrder.DiscountedPrice;
-                                }
-                                else if (prodOrder.MemberDiscountedPrice != 0)
-                                {
-                                    price = prodOrder.MemberDiscountedPrice;
-                                }
-                                else
-                                {
-                                    price = prodOrder.Price;
-                                }
-
-                                if (!date.Contains(monthName + " " + year.ToString()) || !coopId.Contains(coop))
-                                {
-                                    date.Add(monthName + " " + year.ToString());
-                                    coopId.Add(coop);
-                                    var coopDetails = db.CoopDetails.Where(c => c.Id == order.CoopId).FirstOrDefault();
-
-                                    viewBy.Add(new ViewBy
+                                    if (prod.DiscountedPrice != 0)
                                     {
-                                        ViewByID = monthName + " " + year.ToString(),
-                                        CoopId = coopDetails.Id.ToString(),
-                                        CoopName = coopDetails.CoopName,
-                                        TotalSales = price
-                                    });
-
-                                    if (!prodId.Contains(coopProd.Id.ToString()))
+                                        price = prod.DiscountedPrice;
+                                    }
+                                    else if (prod.MemberDiscountedPrice != 0)
                                     {
+                                        price = prod.MemberDiscountedPrice;
+                                    }
+                                    else
+                                    {
+                                        price = prod.Price;
+                                    }
+
+                                    if (!date.Contains(monthName + " " + year.ToString()) || !coopId.Contains(coop))
+                                    {
+                                        date.Add(monthName + " " + year.ToString());
+                                        coopId.Add(coop);
+                                        var coopDetails = db.CoopDetails.Where(c => c.Id == order.CoopId).FirstOrDefault();
+                                        var prodCost = db.Cost.Where(x => x.ProdId == coopProd.Id).OrderByDescending(p => p.Id).FirstOrDefault();
+
+                                        viewBy.Add(new ViewBy
+                                        {
+                                            Cooplogo = coopDetails.CoopLogo,
+                                            ViewByID = monthName + " " + year.ToString(),
+                                            CoopId = coopDetails.Id.ToString(),
+                                            CoopName = coopDetails.CoopName,
+                                            TotalSales = price * prod.Qty,
+                                            TotalCost = prodCost.Cost * prod.Qty,
+                                        });
+
                                         var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == coopProd.Id.ToString()).FirstOrDefault();
 
                                         productSales.Add(new SalesReport2
                                         {
                                             ViewBy = monthName + " " + year.ToString(),
+                                            DateBought = order.OrderCreated_at,
                                             CoopId = coop,
                                             ProdID = prodDetails.Id,
                                             ProdImage = prodDetails.Product_image,
                                             ProdName = prodDetails.Product_Name,
-                                            SoldQty = prodOrder.Qty,
-                                            TotalSales = price
+                                            SoldQty = prod.Qty,
+                                            TotalSales = price * prod.Qty
                                         });
                                     }
                                     else
                                     {
-                                        foreach (var prod in productSales)
-                                        {
-                                            if (prod.ProdID.ToString() == coopProd.Id.ToString())
-                                            {
-                                                prod.TotalSales += price;
-
-                                                foreach (var by in viewBy)
-                                                {
-                                                    if (prod.ViewBy == by.ViewByID)
-                                                    {
-                                                        by.TotalSales += price;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    if (!prodId.Contains(coopProd.Id.ToString()))
-                                    {
                                         var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == coopProd.Id.ToString()).FirstOrDefault();
+                                        var prodCost = db.Cost.Where(x => x.ProdId == coopProd.Id).OrderByDescending(p => p.Id).FirstOrDefault();
 
                                         productSales.Add(new SalesReport2
                                         {
                                             ViewBy = monthName + " " + year.ToString(),
+                                            DateBought = order.OrderCreated_at,
+                                            CoopId = coop,
                                             ProdID = prodDetails.Id,
                                             ProdImage = prodDetails.Product_image,
                                             ProdName = prodDetails.Product_Name,
-                                            SoldQty = prodOrder.Qty,
-                                            TotalSales = price
+                                            SoldQty = prod.Qty,
+                                            TotalSales = price * prod.Qty
                                         });
 
                                         foreach (var by in viewBy)
                                         {
-                                            if (by.ViewByID == year.ToString())
+                                            if (by.ViewByID == monthName + " " + year.ToString())
                                             {
-                                                by.TotalSales += price;
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        foreach (var prod in productSales)
-                                        {
-                                            if (prod.ProdID.ToString() == coopProd.Id.ToString())
-                                            {
-                                                prod.TotalSales += price;
-
-                                                foreach (var by in viewBy)
-                                                {
-                                                    if (prod.ViewBy == by.ViewByID)
-                                                    {
-                                                        by.TotalSales += price;
-                                                    }
-                                                }
+                                                by.TotalSales += price * prod.Qty;
+                                                by.TotalCost += prodCost.Cost * prod.Qty;
                                             }
                                         }
                                     }
@@ -1570,7 +1507,7 @@ namespace PCartWeb.Controllers
 
                         foreach (var order in userOrders)
                         {
-                            var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).FirstOrDefault();
+                            var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).ToList();
                             CultureInfo culture = new CultureInfo("es-ES");
                             DateTime getdate = Convert.ToDateTime(order.OrderCreated_at, CultureInfo.CurrentCulture);
                             var week = GetWeekNumberOfMonth(getdate);
@@ -1578,108 +1515,77 @@ namespace PCartWeb.Controllers
                             var year = getdate.Year;
                             var monthName = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month);
 
-                            if (prodOrder.ProdId == coopProd.Id.ToString())
+                            foreach (var prod in prodOrder)
                             {
-                                if (prodOrder.DiscountedPrice != 0)
+                                if (prod.ProdId == coopProd.Id.ToString())
                                 {
-                                    price = prodOrder.DiscountedPrice;
-                                }
-                                else if (prodOrder.MemberDiscountedPrice != 0)
-                                {
-                                    price = prodOrder.MemberDiscountedPrice;
-                                }
-                                else
-                                {
-                                    price = prodOrder.Price;
-                                }
-
-                                if (!date.Contains("Week " + week + " of " + monthName + " " + year.ToString()) || !coopId.Contains(coop))
-                                {
-                                    date.Add("Week " + week + " of " + monthName + " " + year.ToString());
-                                    coopId.Add(coop);
-                                    var coopDetails = db.CoopDetails.Where(c => c.Id == order.CoopId).FirstOrDefault();
-
-                                    viewBy.Add(new ViewBy
+                                    if (prod.DiscountedPrice != 0)
                                     {
-                                        ViewByID = "Week " + week + " of " + monthName + " " + year.ToString(),
-                                        CoopId = coopDetails.Id.ToString(),
-                                        CoopName = coopDetails.CoopName,
-                                        TotalSales = price
-                                    });
-
-                                    if (!prodId.Contains(coopProd.Id.ToString()))
+                                        price = prod.DiscountedPrice;
+                                    }
+                                    else if (prod.MemberDiscountedPrice != 0)
                                     {
+                                        price = prod.MemberDiscountedPrice;
+                                    }
+                                    else
+                                    {
+                                        price = prod.Price;
+                                    }
+
+                                    if (!date.Contains("Week " + week + " of " + monthName + " " + year.ToString()) || !coopId.Contains(coop))
+                                    {
+                                        date.Add("Week " + week + " of " + monthName + " " + year.ToString());
+                                        coopId.Add(coop);
+                                        var coopDetails = db.CoopDetails.Where(c => c.Id == order.CoopId).FirstOrDefault();
+                                        var prodCost = db.Cost.Where(x => x.ProdId == coopProd.Id).OrderByDescending(p => p.Id).FirstOrDefault();
+
+                                        viewBy.Add(new ViewBy
+                                        {
+                                            Cooplogo = coopDetails.CoopLogo,
+                                            ViewByID = "Week " + week + " of " + monthName + " " + year.ToString(),
+                                            CoopId = coopDetails.Id.ToString(),
+                                            CoopName = coopDetails.CoopName,
+                                            TotalSales = price * prod.Qty,
+                                            TotalCost = prodCost.Cost * prod.Qty,
+                                        });
+
                                         var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == coopProd.Id.ToString()).FirstOrDefault();
 
                                         productSales.Add(new SalesReport2
                                         {
                                             ViewBy = "Week " + week + " of " + monthName + " " + year.ToString(),
+                                            DateBought = order.OrderCreated_at,
                                             CoopId = coop,
                                             ProdID = prodDetails.Id,
                                             ProdImage = prodDetails.Product_image,
                                             ProdName = prodDetails.Product_Name,
-                                            SoldQty = prodOrder.Qty,
-                                            TotalSales = price
+                                            SoldQty = prod.Qty,
+                                            TotalSales = price * prod.Qty
                                         });
                                     }
                                     else
                                     {
-                                        foreach (var prod in productSales)
-                                        {
-                                            if (prod.ProdID.ToString() == coopProd.Id.ToString())
-                                            {
-                                                prod.TotalSales += price;
-
-                                                foreach (var by in viewBy)
-                                                {
-                                                    if (prod.ViewBy == by.ViewByID)
-                                                    {
-                                                        by.TotalSales += price;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    if (!prodId.Contains(coopProd.Id.ToString()))
-                                    {
                                         var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == coopProd.Id.ToString()).FirstOrDefault();
+                                        var prodCost = db.Cost.Where(x => x.ProdId == coopProd.Id).OrderByDescending(p => p.Id).FirstOrDefault();
 
                                         productSales.Add(new SalesReport2
                                         {
                                             ViewBy = "Week " + week + " of " + monthName + " " + year.ToString(),
+                                            DateBought = order.OrderCreated_at,
+                                            CoopId = coop,
                                             ProdID = prodDetails.Id,
                                             ProdImage = prodDetails.Product_image,
                                             ProdName = prodDetails.Product_Name,
-                                            SoldQty = prodOrder.Qty,
-                                            TotalSales = price
+                                            SoldQty = prod.Qty,
+                                            TotalSales = price * prod.Qty
                                         });
 
                                         foreach (var by in viewBy)
                                         {
-                                            if (by.ViewByID == year.ToString())
+                                            if (by.ViewByID == "Week " + week + " of " + monthName + " " + year.ToString())
                                             {
-                                                by.TotalSales += price;
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        foreach (var prod in productSales)
-                                        {
-                                            if (prod.ProdID.ToString() == coopProd.Id.ToString())
-                                            {
-                                                prod.TotalSales += price;
-
-                                                foreach (var by in viewBy)
-                                                {
-                                                    if (prod.ViewBy == by.ViewByID)
-                                                    {
-                                                        by.TotalSales += price;
-                                                    }
-                                                }
+                                                by.TotalSales += price * prod.Qty;
+                                                by.TotalCost += prodCost.Cost * prod.Qty;
                                             }
                                         }
                                     }
@@ -1706,116 +1612,85 @@ namespace PCartWeb.Controllers
 
                         foreach (var order in userOrders)
                         {
-                            var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).FirstOrDefault();
+                            var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).ToList();
                             CultureInfo culture = new CultureInfo("es-ES");
                             DateTime getdate = Convert.ToDateTime(order.OrderCreated_at, CultureInfo.CurrentCulture);
                             DateTime startDate = Convert.ToDateTime(model.DateStart, culture);
                             DateTime endDate = Convert.ToDateTime(model.DateEnd, culture);
 
-                            if (getdate >= startDate && getdate <= endDate)
+                            foreach (var prod in prodOrder)
                             {
-                                if (prodOrder.ProdId == coopProd.Id.ToString())
+                                if (getdate.Date >= startDate.Date && getdate.Date <= endDate.Date)
                                 {
-                                    if (prodOrder.DiscountedPrice != 0)
+                                    if (prod.ProdId == coopProd.Id.ToString())
                                     {
-                                        price = prodOrder.DiscountedPrice;
-                                    }
-                                    else if (prodOrder.MemberDiscountedPrice != 0)
-                                    {
-                                        price = prodOrder.MemberDiscountedPrice;
-                                    }
-                                    else
-                                    {
-                                        price = prodOrder.Price;
-                                    }
-
-                                    if (!date.Contains(getdate.ToString()) || !coopId.Contains(coop))
-                                    {
-                                        date.Add(getdate.ToString());
-                                        coopId.Add(coop);
-                                        var coopDetails = db.CoopDetails.Where(c => c.Id == order.CoopId).FirstOrDefault();
-
-                                        viewBy.Add(new ViewBy
+                                        if (prod.DiscountedPrice != 0)
                                         {
-                                            ViewByID = getdate.ToString(),
-                                            CoopId = coopDetails.Id.ToString(),
-                                            CoopName = coopDetails.CoopName,
-                                            TotalSales = price
-                                        });
-
-                                        if (!prodId.Contains(coopProd.Id.ToString()))
+                                            price = prod.DiscountedPrice;
+                                        }
+                                        else if (prod.MemberDiscountedPrice != 0)
                                         {
+                                            price = prod.MemberDiscountedPrice;
+                                        }
+                                        else
+                                        {
+                                            price = prod.Price;
+                                        }
+
+                                        if (!date.Contains(getdate.Date.ToString("MM/dd/yyyy")) || !coopId.Contains(coop))
+                                        {
+                                            date.Add(getdate.Date.ToString("MM/dd/yyyy"));
+                                            coopId.Add(coop);
+                                            var coopDetails = db.CoopDetails.Where(c => c.Id == order.CoopId).FirstOrDefault();
+                                            var prodCost = db.Cost.Where(x => x.ProdId == coopProd.Id).OrderByDescending(p => p.Id).FirstOrDefault();
+
+                                            viewBy.Add(new ViewBy
+                                            {
+                                                Cooplogo = coopDetails.CoopLogo,
+                                                ViewByID = getdate.Date.ToString("MM/dd/yyyy"),
+                                                CoopId = coopDetails.Id.ToString(),
+                                                CoopName = coopDetails.CoopName,
+                                                TotalSales = price * prod.Qty,
+                                                TotalCost = prodCost.Cost * prod.Qty,
+                                            });
+
                                             var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == coopProd.Id.ToString()).FirstOrDefault();
 
                                             productSales.Add(new SalesReport2
                                             {
-                                                ViewBy = getdate.ToString(),
+                                                ViewBy = getdate.Date.ToString("MM/dd/yyyy"),
+                                                DateBought = order.OrderCreated_at,
                                                 CoopId = coop,
                                                 ProdID = prodDetails.Id,
                                                 ProdImage = prodDetails.Product_image,
                                                 ProdName = prodDetails.Product_Name,
-                                                SoldQty = prodOrder.Qty,
-                                                TotalSales = price
+                                                SoldQty = prod.Qty,
+                                                TotalSales = price * prod.Qty
                                             });
                                         }
                                         else
                                         {
-                                            foreach (var prod in productSales)
-                                            {
-                                                if (prod.ProdID.ToString() == coopProd.Id.ToString())
-                                                {
-                                                    prod.TotalSales += price;
-
-                                                    foreach (var by in viewBy)
-                                                    {
-                                                        if (prod.ViewBy == by.ViewByID)
-                                                        {
-                                                            by.TotalSales += price;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (!prodId.Contains(coopProd.Id.ToString()))
-                                        {
                                             var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == coopProd.Id.ToString()).FirstOrDefault();
+                                            var prodCost = db.Cost.Where(x => x.ProdId == coopProd.Id).OrderByDescending(p => p.Id).FirstOrDefault();
 
                                             productSales.Add(new SalesReport2
                                             {
-                                                ViewBy = getdate.ToString(),
+                                                ViewBy = getdate.Date.ToString("MM/dd/yyyy"),
+                                                DateBought = order.OrderCreated_at,
+                                                CoopId = coop,
                                                 ProdID = prodDetails.Id,
                                                 ProdImage = prodDetails.Product_image,
                                                 ProdName = prodDetails.Product_Name,
-                                                SoldQty = prodOrder.Qty,
-                                                TotalSales = price
+                                                SoldQty = prod.Qty,
+                                                TotalSales = price * prod.Qty
                                             });
 
                                             foreach (var by in viewBy)
                                             {
                                                 if (by.ViewByID == getdate.ToString())
                                                 {
-                                                    by.TotalSales += price;
-                                                }
-                                            }
-                                        }
-                                        else
-                                        {
-                                            foreach (var prod in productSales)
-                                            {
-                                                if (prod.ProdID.ToString() == coopProd.Id.ToString())
-                                                {
-                                                    prod.TotalSales += price;
-
-                                                    foreach (var by in viewBy)
-                                                    {
-                                                        if (prod.ViewBy == by.ViewByID)
-                                                        {
-                                                            by.TotalSales += price;
-                                                        }
-                                                    }
+                                                    by.TotalSales += price * prod.Qty;
+                                                    by.TotalCost += prodCost.Cost * prod.Qty;
                                                 }
                                             }
                                         }
@@ -1930,113 +1805,82 @@ namespace PCartWeb.Controllers
 
                             foreach (var order in userOrders)
                             {
-                                var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).FirstOrDefault();
+                                var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).ToList();
                                 CultureInfo culture = new CultureInfo("es-ES");
                                 DateTime getdate = Convert.ToDateTime(order.OrderCreated_at, CultureInfo.CurrentCulture);
                                 var year = getdate.Year;
 
-                                if (prodOrder.ProdId == coopProd.Id.ToString())
+                                foreach (var prod in prodOrder)
                                 {
-                                    if (prodOrder.DiscountedPrice != 0)
+                                    if (prod.ProdId == coopProd.Id.ToString())
                                     {
-                                        price = prodOrder.DiscountedPrice;
-                                    }
-                                    else if (prodOrder.MemberDiscountedPrice != 0)
-                                    {
-                                        price = prodOrder.MemberDiscountedPrice;
-                                    }
-                                    else
-                                    {
-                                        price = prodOrder.Price;
-                                    }
-
-                                    if (!date.Contains(year.ToString()) || !coopId.Contains(coop))
-                                    {
-                                        date.Add(year.ToString());
-                                        coopId.Add(coop);
-                                        var coopDetails = db.CoopDetails.Where(c => c.Id == order.CoopId).FirstOrDefault();
-
-                                        viewBy.Add(new ViewBy
+                                        if (prod.DiscountedPrice != 0)
                                         {
-                                            ViewByID = year.ToString(),
-                                            CoopId = coopDetails.Id.ToString(),
-                                            CoopName = coopDetails.CoopName,
-                                            TotalSales = price
-                                        });
-
-                                        if (!prodId.Contains(coopProd.Id.ToString()))
+                                            price = prod.DiscountedPrice;
+                                        }
+                                        else if (prod.MemberDiscountedPrice != 0)
                                         {
+                                            price = prod.MemberDiscountedPrice;
+                                        }
+                                        else
+                                        {
+                                            price = prod.Price;
+                                        }
+
+                                        if (!date.Contains(year.ToString()) || !coopId.Contains(coop))
+                                        {
+                                            date.Add(year.ToString());
+                                            coopId.Add(coop);
+                                            var coopDetails = db.CoopDetails.Where(c => c.Id == order.CoopId).FirstOrDefault();
+                                            var prodCost = db.Cost.Where(x => x.ProdId == coopProd.Id).OrderByDescending(p => p.Id).FirstOrDefault();
+
+                                            viewBy.Add(new ViewBy
+                                            {
+                                                Cooplogo = coopDetails.CoopLogo,
+                                                ViewByID = year.ToString(),
+                                                CoopId = coopDetails.Id.ToString(),
+                                                CoopName = coopDetails.CoopName,
+                                                TotalSales = price * prod.Qty,
+                                                TotalCost = prodCost.Cost * prod.Qty,
+                                            });
+
                                             var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == coopProd.Id.ToString()).FirstOrDefault();
 
                                             productSales.Add(new SalesReport2
                                             {
                                                 ViewBy = year.ToString(),
+                                                DateBought = order.OrderCreated_at,
                                                 CoopId = coop,
                                                 ProdID = prodDetails.Id,
                                                 ProdImage = prodDetails.Product_image,
                                                 ProdName = prodDetails.Product_Name,
-                                                SoldQty = prodOrder.Qty,
-                                                TotalSales = price
+                                                SoldQty = prod.Qty,
+                                                TotalSales = price * prod.Qty
                                             });
                                         }
                                         else
                                         {
-                                            foreach (var prod in productSales)
-                                            {
-                                                if (prod.ProdID.ToString() == coopProd.Id.ToString())
-                                                {
-                                                    prod.TotalSales += price;
-
-                                                    foreach (var by in viewBy)
-                                                    {
-                                                        if (prod.ViewBy == by.ViewByID)
-                                                        {
-                                                            by.TotalSales += price;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (!prodId.Contains(coopProd.Id.ToString()))
-                                        {
                                             var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == coopProd.Id.ToString()).FirstOrDefault();
+                                            var prodCost = db.Cost.Where(x => x.ProdId == coopProd.Id).OrderByDescending(p => p.Id).FirstOrDefault();
 
                                             productSales.Add(new SalesReport2
                                             {
+                                                CoopId = coop,
                                                 ViewBy = year.ToString(),
+                                                DateBought = order.OrderCreated_at,
                                                 ProdID = prodDetails.Id,
                                                 ProdImage = prodDetails.Product_image,
                                                 ProdName = prodDetails.Product_Name,
-                                                SoldQty = prodOrder.Qty,
-                                                TotalSales = price
+                                                SoldQty = prod.Qty,
+                                                TotalSales = price * prod.Qty
                                             });
 
                                             foreach (var by in viewBy)
                                             {
                                                 if (by.ViewByID == year.ToString())
                                                 {
-                                                    by.TotalSales += price;
-                                                }
-                                            }
-                                        }
-                                        else
-                                        {
-                                            foreach (var prod in productSales)
-                                            {
-                                                if (prod.ProdID.ToString() == coopProd.Id.ToString())
-                                                {
-                                                    prod.TotalSales += price;
-
-                                                    foreach (var by in viewBy)
-                                                    {
-                                                        if (prod.ViewBy == by.ViewByID)
-                                                        {
-                                                            by.TotalSales += price;
-                                                        }
-                                                    }
+                                                    by.TotalSales += price * prod.Qty;
+                                                    by.TotalCost += prodCost.Cost * prod.Qty;
                                                 }
                                             }
                                         }
@@ -2063,115 +1907,84 @@ namespace PCartWeb.Controllers
 
                             foreach (var order in userOrders)
                             {
-                                var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).FirstOrDefault();
+                                var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).ToList();
                                 CultureInfo culture = new CultureInfo("es-ES");
                                 DateTime getdate = Convert.ToDateTime(order.OrderCreated_at, CultureInfo.CurrentCulture);
                                 var month = getdate.Month;
                                 var year = getdate.Year;
                                 var monthName = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month);
 
-                                if (prodOrder.ProdId == coopProd.Id.ToString())
+                                foreach (var prod in prodOrder)
                                 {
-                                    if (prodOrder.DiscountedPrice != 0)
+                                    if (prod.ProdId == coopProd.Id.ToString())
                                     {
-                                        price = prodOrder.DiscountedPrice;
-                                    }
-                                    else if (prodOrder.MemberDiscountedPrice != 0)
-                                    {
-                                        price = prodOrder.MemberDiscountedPrice;
-                                    }
-                                    else
-                                    {
-                                        price = prodOrder.Price;
-                                    }
-
-                                    if (!date.Contains(monthName + " " + year.ToString()) || !coopId.Contains(coop))
-                                    {
-                                        date.Add(monthName + " " + year.ToString());
-                                        coopId.Add(coop);
-                                        var coopDetails = db.CoopDetails.Where(c => c.Id == order.CoopId).FirstOrDefault();
-
-                                        viewBy.Add(new ViewBy
+                                        if (prod.DiscountedPrice != 0)
                                         {
-                                            ViewByID = monthName + " " + year.ToString(),
-                                            CoopId = coopDetails.Id.ToString(),
-                                            CoopName = coopDetails.CoopName,
-                                            TotalSales = price
-                                        });
-
-                                        if (!prodId.Contains(coopProd.Id.ToString()))
+                                            price = prod.DiscountedPrice;
+                                        }
+                                        else if (prod.MemberDiscountedPrice != 0)
                                         {
+                                            price = prod.MemberDiscountedPrice;
+                                        }
+                                        else
+                                        {
+                                            price = prod.Price;
+                                        }
+
+                                        if (!date.Contains(monthName + " " + year.ToString()) || !coopId.Contains(coop))
+                                        {
+                                            date.Add(monthName + " " + year.ToString());
+                                            coopId.Add(coop);
+                                            var coopDetails = db.CoopDetails.Where(c => c.Id == order.CoopId).FirstOrDefault();
+                                            var prodCost = db.Cost.Where(x => x.ProdId == coopProd.Id).OrderByDescending(p => p.Id).FirstOrDefault();
+
+                                            viewBy.Add(new ViewBy
+                                            {
+                                                Cooplogo = coopDetails.CoopLogo,
+                                                ViewByID = monthName + " " + year.ToString(),
+                                                CoopId = coopDetails.Id.ToString(),
+                                                CoopName = coopDetails.CoopName,
+                                                TotalSales = price * prod.Qty,
+                                                TotalCost = prodCost.Cost * prod.Qty,
+                                            });
+
                                             var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == coopProd.Id.ToString()).FirstOrDefault();
 
                                             productSales.Add(new SalesReport2
                                             {
                                                 ViewBy = monthName + " " + year.ToString(),
+                                                DateBought = order.OrderCreated_at,
                                                 CoopId = coop,
                                                 ProdID = prodDetails.Id,
                                                 ProdImage = prodDetails.Product_image,
                                                 ProdName = prodDetails.Product_Name,
-                                                SoldQty = prodOrder.Qty,
-                                                TotalSales = price
+                                                SoldQty = prod.Qty,
+                                                TotalSales = price * prod.Qty
                                             });
                                         }
                                         else
                                         {
-                                            foreach (var prod in productSales)
-                                            {
-                                                if (prod.ProdID.ToString() == coopProd.Id.ToString())
-                                                {
-                                                    prod.TotalSales += price;
-
-                                                    foreach (var by in viewBy)
-                                                    {
-                                                        if (prod.ViewBy == by.ViewByID)
-                                                        {
-                                                            by.TotalSales += price;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (!prodId.Contains(coopProd.Id.ToString()))
-                                        {
                                             var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == coopProd.Id.ToString()).FirstOrDefault();
+                                            var prodCost = db.Cost.Where(x => x.ProdId == coopProd.Id).OrderByDescending(p => p.Id).FirstOrDefault();
 
                                             productSales.Add(new SalesReport2
                                             {
                                                 ViewBy = monthName + " " + year.ToString(),
+                                                DateBought = order.OrderCreated_at,
+                                                CoopId = coop,
                                                 ProdID = prodDetails.Id,
                                                 ProdImage = prodDetails.Product_image,
                                                 ProdName = prodDetails.Product_Name,
-                                                SoldQty = prodOrder.Qty,
-                                                TotalSales = price
+                                                SoldQty = prod.Qty,
+                                                TotalSales = price * prod.Qty
                                             });
 
                                             foreach (var by in viewBy)
                                             {
-                                                if (by.ViewByID == year.ToString())
+                                                if (by.ViewByID == monthName + " " + year.ToString())
                                                 {
-                                                    by.TotalSales += price;
-                                                }
-                                            }
-                                        }
-                                        else
-                                        {
-                                            foreach (var prod in productSales)
-                                            {
-                                                if (prod.ProdID.ToString() == coopProd.Id.ToString())
-                                                {
-                                                    prod.TotalSales += price;
-
-                                                    foreach (var by in viewBy)
-                                                    {
-                                                        if (prod.ViewBy == by.ViewByID)
-                                                        {
-                                                            by.TotalSales += price;
-                                                        }
-                                                    }
+                                                    by.TotalSales += price * prod.Qty;
+                                                    by.TotalCost += prodCost.Cost * prod.Qty;
                                                 }
                                             }
                                         }
@@ -2198,7 +2011,7 @@ namespace PCartWeb.Controllers
 
                             foreach (var order in userOrders)
                             {
-                                var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).FirstOrDefault();
+                                var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).ToList();
                                 CultureInfo culture = new CultureInfo("es-ES");
                                 DateTime getdate = Convert.ToDateTime(order.OrderCreated_at, CultureInfo.CurrentCulture);
                                 var week = GetWeekNumberOfMonth(getdate);
@@ -2206,108 +2019,77 @@ namespace PCartWeb.Controllers
                                 var year = getdate.Year;
                                 var monthName = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month);
 
-                                if (prodOrder.ProdId == coopProd.Id.ToString())
+                                foreach (var prod in prodOrder)
                                 {
-                                    if (prodOrder.DiscountedPrice != 0)
+                                    if (prod.ProdId == coopProd.Id.ToString())
                                     {
-                                        price = prodOrder.DiscountedPrice;
-                                    }
-                                    else if (prodOrder.MemberDiscountedPrice != 0)
-                                    {
-                                        price = prodOrder.MemberDiscountedPrice;
-                                    }
-                                    else
-                                    {
-                                        price = prodOrder.Price;
-                                    }
-
-                                    if (!date.Contains("Week " + week + " of " + monthName + " " + year.ToString()) || !coopId.Contains(coop))
-                                    {
-                                        date.Add("Week " + week + " of " + monthName + " " + year.ToString());
-                                        coopId.Add(coop);
-                                        var coopDetails = db.CoopDetails.Where(c => c.Id == order.CoopId).FirstOrDefault();
-
-                                        viewBy.Add(new ViewBy
+                                        if (prod.DiscountedPrice != 0)
                                         {
-                                            ViewByID = "Week " + week + " of " + monthName + " " + year.ToString(),
-                                            CoopId = coopDetails.Id.ToString(),
-                                            CoopName = coopDetails.CoopName,
-                                            TotalSales = price
-                                        });
-
-                                        if (!prodId.Contains(coopProd.Id.ToString()))
+                                            price = prod.DiscountedPrice;
+                                        }
+                                        else if (prod.MemberDiscountedPrice != 0)
                                         {
+                                            price = prod.MemberDiscountedPrice;
+                                        }
+                                        else
+                                        {
+                                            price = prod.Price;
+                                        }
+
+                                        if (!date.Contains("Week " + week + " of " + monthName + " " + year.ToString()) || !coopId.Contains(coop))
+                                        {
+                                            date.Add("Week " + week + " of " + monthName + " " + year.ToString());
+                                            coopId.Add(coop);
+                                            var coopDetails = db.CoopDetails.Where(c => c.Id == order.CoopId).FirstOrDefault();
+                                            var prodCost = db.Cost.Where(x => x.ProdId == coopProd.Id).OrderByDescending(p => p.Id).FirstOrDefault();
+
+                                            viewBy.Add(new ViewBy
+                                            {
+                                                Cooplogo = coopDetails.CoopLogo,
+                                                ViewByID = "Week " + week + " of " + monthName + " " + year.ToString(),
+                                                CoopId = coopDetails.Id.ToString(),
+                                                CoopName = coopDetails.CoopName,
+                                                TotalSales = price * prod.Qty,
+                                                TotalCost = prodCost.Cost * prod.Qty,
+                                            });
+
                                             var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == coopProd.Id.ToString()).FirstOrDefault();
 
                                             productSales.Add(new SalesReport2
                                             {
                                                 ViewBy = "Week " + week + " of " + monthName + " " + year.ToString(),
+                                                DateBought = order.OrderCreated_at,
                                                 CoopId = coop,
                                                 ProdID = prodDetails.Id,
                                                 ProdImage = prodDetails.Product_image,
                                                 ProdName = prodDetails.Product_Name,
-                                                SoldQty = prodOrder.Qty,
-                                                TotalSales = price
+                                                SoldQty = prod.Qty,
+                                                TotalSales = price * prod.Qty
                                             });
                                         }
                                         else
                                         {
-                                            foreach (var prod in productSales)
-                                            {
-                                                if (prod.ProdID.ToString() == coopProd.Id.ToString())
-                                                {
-                                                    prod.TotalSales += price;
-
-                                                    foreach (var by in viewBy)
-                                                    {
-                                                        if (prod.ViewBy == by.ViewByID)
-                                                        {
-                                                            by.TotalSales += price;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (!prodId.Contains(coopProd.Id.ToString()))
-                                        {
                                             var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == coopProd.Id.ToString()).FirstOrDefault();
+                                            var prodCost = db.Cost.Where(x => x.ProdId == coopProd.Id).OrderByDescending(p => p.Id).FirstOrDefault();
 
                                             productSales.Add(new SalesReport2
                                             {
                                                 ViewBy = "Week " + week + " of " + monthName + " " + year.ToString(),
+                                                DateBought = order.OrderCreated_at,
+                                                CoopId = coop,
                                                 ProdID = prodDetails.Id,
                                                 ProdImage = prodDetails.Product_image,
                                                 ProdName = prodDetails.Product_Name,
-                                                SoldQty = prodOrder.Qty,
-                                                TotalSales = price
+                                                SoldQty = prod.Qty,
+                                                TotalSales = price * prod.Qty
                                             });
 
                                             foreach (var by in viewBy)
                                             {
-                                                if (by.ViewByID == year.ToString())
+                                                if (by.ViewByID == "Week " + week + " of " + monthName + " " + year.ToString())
                                                 {
-                                                    by.TotalSales += price;
-                                                }
-                                            }
-                                        }
-                                        else
-                                        {
-                                            foreach (var prod in productSales)
-                                            {
-                                                if (prod.ProdID.ToString() == coopProd.Id.ToString())
-                                                {
-                                                    prod.TotalSales += price;
-
-                                                    foreach (var by in viewBy)
-                                                    {
-                                                        if (prod.ViewBy == by.ViewByID)
-                                                        {
-                                                            by.TotalSales += price;
-                                                        }
-                                                    }
+                                                    by.TotalSales += price * prod.Qty;
+                                                    by.TotalCost += prodCost.Cost * prod.Qty;
                                                 }
                                             }
                                         }
@@ -2334,116 +2116,85 @@ namespace PCartWeb.Controllers
 
                             foreach (var order in userOrders)
                             {
-                                var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).FirstOrDefault();
+                                var prodOrder = db.ProdOrders.Where(x => x.UOrderId == order.Id.ToString()).ToList();
                                 CultureInfo culture = new CultureInfo("es-ES");
                                 DateTime getdate = Convert.ToDateTime(order.OrderCreated_at, CultureInfo.CurrentCulture);
-                                DateTime startDate = Convert.ToDateTime(date1, culture);
-                                DateTime endDate = Convert.ToDateTime(date2, culture);
+                                DateTime startDate = Convert.ToDateTime(model.DateStart, culture);
+                                DateTime endDate = Convert.ToDateTime(model.DateEnd, culture);
 
-                                if (getdate >= startDate && getdate <= endDate)
+                                foreach (var prod in prodOrder)
                                 {
-                                    if (prodOrder.ProdId == coopProd.Id.ToString())
+                                    if (getdate.Date >= startDate.Date && getdate.Date <= endDate.Date)
                                     {
-                                        if (prodOrder.DiscountedPrice != 0)
+                                        if (prod.ProdId == coopProd.Id.ToString())
                                         {
-                                            price = prodOrder.DiscountedPrice;
-                                        }
-                                        else if (prodOrder.MemberDiscountedPrice != 0)
-                                        {
-                                            price = prodOrder.MemberDiscountedPrice;
-                                        }
-                                        else
-                                        {
-                                            price = prodOrder.Price;
-                                        }
-
-                                        if (!date.Contains(getdate.ToString()) || !coopId.Contains(coop))
-                                        {
-                                            date.Add(getdate.ToString());
-                                            coopId.Add(coop);
-                                            var coopDetails = db.CoopDetails.Where(c => c.Id == order.CoopId).FirstOrDefault();
-
-                                            viewBy.Add(new ViewBy
+                                            if (prod.DiscountedPrice != 0)
                                             {
-                                                ViewByID = getdate.ToString(),
-                                                CoopId = coopDetails.Id.ToString(),
-                                                CoopName = coopDetails.CoopName,
-                                                TotalSales = price
-                                            });
-
-                                            if (!prodId.Contains(coopProd.Id.ToString()))
+                                                price = prod.DiscountedPrice;
+                                            }
+                                            else if (prod.MemberDiscountedPrice != 0)
                                             {
+                                                price = prod.MemberDiscountedPrice;
+                                            }
+                                            else
+                                            {
+                                                price = prod.Price;
+                                            }
+
+                                            if (!date.Contains(getdate.Date.ToString("MM/dd/yyyy")) || !coopId.Contains(coop))
+                                            {
+                                                date.Add(getdate.Date.ToString("MM/dd/yyyy"));
+                                                coopId.Add(coop);
+                                                var coopDetails = db.CoopDetails.Where(c => c.Id == order.CoopId).FirstOrDefault();
+                                                var prodCost = db.Cost.Where(x => x.ProdId == coopProd.Id).OrderByDescending(p => p.Id).FirstOrDefault();
+
+                                                viewBy.Add(new ViewBy
+                                                {
+                                                    Cooplogo = coopDetails.CoopLogo,
+                                                    ViewByID = getdate.Date.ToString("MM/dd/yyyy"),
+                                                    CoopId = coopDetails.Id.ToString(),
+                                                    CoopName = coopDetails.CoopName,
+                                                    TotalSales = price * prod.Qty,
+                                                    TotalCost = prodCost.Cost * prod.Qty,
+                                                });
+
                                                 var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == coopProd.Id.ToString()).FirstOrDefault();
 
                                                 productSales.Add(new SalesReport2
                                                 {
-                                                    ViewBy = getdate.ToString(),
+                                                    ViewBy = getdate.Date.ToString("MM/dd/yyyy"),
+                                                    DateBought = order.OrderCreated_at,
                                                     CoopId = coop,
                                                     ProdID = prodDetails.Id,
                                                     ProdImage = prodDetails.Product_image,
                                                     ProdName = prodDetails.Product_Name,
-                                                    SoldQty = prodOrder.Qty,
-                                                    TotalSales = price
+                                                    SoldQty = prod.Qty,
+                                                    TotalSales = price * prod.Qty
                                                 });
                                             }
                                             else
                                             {
-                                                foreach (var prod in productSales)
-                                                {
-                                                    if (prod.ProdID.ToString() == coopProd.Id.ToString())
-                                                    {
-                                                        prod.TotalSales += price;
-
-                                                        foreach (var by in viewBy)
-                                                        {
-                                                            if (prod.ViewBy == by.ViewByID)
-                                                            {
-                                                                by.TotalSales += price;
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        else
-                                        {
-                                            if (!prodId.Contains(coopProd.Id.ToString()))
-                                            {
                                                 var prodDetails = db.ProductDetails.Where(x => x.Id.ToString() == coopProd.Id.ToString()).FirstOrDefault();
+                                                var prodCost = db.Cost.Where(x => x.ProdId == coopProd.Id).OrderByDescending(p => p.Id).FirstOrDefault();
 
                                                 productSales.Add(new SalesReport2
                                                 {
-                                                    ViewBy = getdate.ToString(),
+                                                    ViewBy = getdate.Date.ToString("MM/dd/yyyy"),
+                                                    DateBought = order.OrderCreated_at,
+                                                    CoopId = coop,
                                                     ProdID = prodDetails.Id,
                                                     ProdImage = prodDetails.Product_image,
                                                     ProdName = prodDetails.Product_Name,
-                                                    SoldQty = prodOrder.Qty,
-                                                    TotalSales = price
+                                                    SoldQty = prod.Qty,
+                                                    TotalSales = price * prod.Qty
                                                 });
 
                                                 foreach (var by in viewBy)
                                                 {
                                                     if (by.ViewByID == getdate.ToString())
                                                     {
-                                                        by.TotalSales += price;
-                                                    }
-                                                }
-                                            }
-                                            else
-                                            {
-                                                foreach (var prod in productSales)
-                                                {
-                                                    if (prod.ProdID.ToString() == coopProd.Id.ToString())
-                                                    {
-                                                        prod.TotalSales += price;
-
-                                                        foreach (var by in viewBy)
-                                                        {
-                                                            if (prod.ViewBy == by.ViewByID)
-                                                            {
-                                                                by.TotalSales += price;
-                                                            }
-                                                        }
+                                                        by.TotalSales += price * prod.Qty;
+                                                        by.TotalCost += prodCost.Cost * prod.Qty;
                                                     }
                                                 }
                                             }
@@ -2453,6 +2204,7 @@ namespace PCartWeb.Controllers
                             }
                         }
                     }
+
 
                     price = 0;
                     coopId.Clear();

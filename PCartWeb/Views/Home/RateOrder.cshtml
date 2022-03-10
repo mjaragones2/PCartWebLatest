@@ -85,6 +85,7 @@
                 </div>
             </div>
         </div>
+        
         <table class="table">
             <tr>
                 <th>
@@ -138,6 +139,7 @@
                             <div>
                                 <input type="hidden" id="Rating" name="rate" />
                                 <p style="color:red;">@ViewBag.ErrorMessage</p>
+                                <input type="hidden" value="@item.UOrderId" name="userordid" />
                                 <input type="hidden" value="@item.ProdOrderId" name="orderid" />
                                 <input type="hidden" value="@item.ProdId" name="prodid" />
                             </div>

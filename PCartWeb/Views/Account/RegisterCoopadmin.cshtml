@@ -35,6 +35,13 @@
                                     <div class="col-sm">
                                         <p class="text-sm-left"><span class="badge badge-secondary">Co-op Details</span></p>
                                         <div class="form-group row">
+                                            @Html.LabelFor(model => model.Cooplogo, htmlAttributes: new { @class = "control-label col-md-5" })
+                                            <div class="col-md-10">
+                                                <input name="LogoFile" type="file" id="formFile">
+                                                @Html.ValidationMessageFor(model => model.Cooplogo, "", new { @class = "text-danger" })
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
                                             @Html.LabelFor(model => model.CoopName, htmlAttributes: new { @class = "control-label col-md-5" })
                                             <div class="col-md-10">
                                                 @Html.EditorFor(model => model.CoopName, new { htmlAttributes = new { @class = "form-control" } })
@@ -66,6 +73,7 @@
                                             @Html.LabelFor(model => model.Image, htmlAttributes: new { @class = "control-label col-md-5" })
                                             <div class="col-md-10">
                                                 <input name="ImageFile" type="file" id="formFile">
+                                                @Html.ValidationMessageFor(model => model.Image, "", new { @class = "text-danger" })
                                             </div>
                                         </div>
                                         <div class="form-group row">

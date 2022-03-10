@@ -256,6 +256,10 @@
     <Compile Include="Migrations\202202280546496_UpdateSender.designer.cs">
       <DependentUpon>202202280546496_UpdateSender.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202203100032221_CoopUpdate.cs" />
+    <Compile Include="Migrations\202203100032221_CoopUpdate.designer.cs">
+      <DependentUpon>202203100032221_CoopUpdate.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\PaypalConfiguration.cs" />
     <Compile Include="PDFReport\RDLC\DataSet1.Designer.cs">
@@ -351,6 +355,7 @@
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
     <Content Include="Images\cancelled.png" />
+    <Content Include="Images\cebupeoplecoop.jfif" />
     <Content Include="Images\completed.png" />
     <Content Include="Images\defaultprofile.jpg" />
     <Content Include="Images\deliverybox.png" />
@@ -358,6 +363,7 @@
     <Content Include="Images\eWalletHistory.png" />
     <Content Include="Images\heartred.png" />
     <Content Include="Images\heart.png" />
+    <Content Include="Images\lamaclogo.jpg" />
     <Content Include="Images\Order history.png" />
     <Content Include="Images\PCartLogo.png" />
     <Content Include="Images\product reviews.png" />
@@ -676,6 +682,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202202280546496_UpdateSender.resx">
       <DependentUpon>202202280546496_UpdateSender.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202203100032221_CoopUpdate.resx">
+      <DependentUpon>202203100032221_CoopUpdate.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="PDFReport\RDLC\Report1.rdlc" />
     <EmbeddedResource Include="PDFReport\RDLC\Report2.rdlc" />

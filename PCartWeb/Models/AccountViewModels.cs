@@ -331,6 +331,9 @@ namespace PCartWeb.Models
     public class RegisterCoopAdminViewmodel
     {
         public string MembershipForm { get; set; }
+        public HttpPostedFileBase LogoFile { get; set; }
+        [Display(Name = "Upload Company Logo")]
+        public string Cooplogo { get; set; }
         public HttpPostedFileBase DocFile { get; set; }
         [Display(Name = "Upload Profile")]
         public string Image { get; set; }

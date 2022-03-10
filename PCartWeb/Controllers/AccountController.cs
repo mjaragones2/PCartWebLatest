@@ -713,11 +713,17 @@ namespace PCartWeb.Controllers
                 new SelectListItem {Selected = false, Text = "LGBTQ", Value = "LGBTQ"},
                 new SelectListItem {Selected = false, Text = "Rather Not Say", Value = "Rather Not Say"}
             }, "Value", "Text", 1);
+            int logocount = 0;
+            if(model.LogoFile == null)
+            {
+                logocount = 1;
+                ModelState.AddModelError("Cooplogo", "This field is required.");
+            }
 
             if (ModelState.IsValid)
             {
                 bool checkcoop = CheckCoop(model.CoopName, model.CoopAddress);
-                if (checkcoop == false)
+                if (checkcoop == false || logocount == 1)
                 {
                     model.Latitude = string.Empty;
                     model.Latitude1 = string.Empty;
@@ -739,8 +745,25 @@ namespace PCartWeb.Controllers
                 if (result.Succeeded)
                 {
                     var allowedExtensions = new[] {
-                        ".Jpg", ".png", ".jpg", "jpeg"
+                        ".Jpg", ".png", ".jpg", "jpeg", ".jiff", ".gif", ".jfif"
                     };
+                    if (model.LogoFile != null)
+                    {
+                        string logoname = Path.GetFileNameWithoutExtension(model.LogoFile.FileName);
+                        string ex = Path.GetExtension(model.LogoFile.FileName);
+
+                        if(allowedExtensions.Contains(ex.ToLower()))
+                        {
+                            string filename = logoname + ex;
+                            string path = Path.Combine(Server.MapPath("~/Images/"), filename);
+                            model.LogoFile.SaveAs(path);
+                        }
+                        else
+                        {
+                            ModelState.AddModelError("Cooplogo", "This field only accepts .Jpg, .png, .jpg, jpeg, .jiff, .gif, and .jfif");
+                        }
+                    }
+                    
                     if (model.ImageFile == null)
                     {
                         var id = user.Id;

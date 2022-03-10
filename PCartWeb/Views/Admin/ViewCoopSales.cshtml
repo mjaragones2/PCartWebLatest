@@ -23,83 +23,102 @@
 
 @using (Html.BeginForm("CoopSalesToPDF", "Admin", FormMethod.Post, new { enctype = "multipart/form-data", id = "convertForm" }))
 {
-<div id="convertThisPageButtonDiv">
+    <div id="convertThisPageButtonDiv">
+        <br />
+        <input type="submit" value="Generate PDF" class="btn btn-danger" />
+        <input type="hidden" value="@ViewBag.ViewBy" id="thedate" name="toshow" />
+        <input type="hidden" value="@ViewBag.CoopSearch" id="thesearch" name="tosearch" />
+        <input type="hidden" value="@ViewBag.DateStart" id="datestart" name="starteu" />
+        <input type="hidden" value="@ViewBag.DateEnd" id="dateend" name="endeu" />
+        <input type="hidden" value="@ViewBag.Selected" id="selected" name="selecteu" />
+    </div>
     <br />
-    <input type="submit" value="Generate PDF" class="btn btn-danger" />
-    <input type="hidden" value="@ViewBag.ViewBy" id="thedate" name="toshow" />
-    <input type="hidden" value="@ViewBag.CoopSearch" id="thesearch" name="tosearch" />
-    <input type="hidden" value="@ViewBag.DateStart" id="datestart" name="starteu" />
-    <input type="hidden" value="@ViewBag.DateEnd" id="dateend" name="endeu" />
-    <input type="hidden" value="@ViewBag.Selected" id="selected" name="selecteu" />
+    <div style="text-align: end;">
+    <p>Date/Time: <span id="dategenerated"></span></p>
 </div>
-                <br /> if (Model.SalesReports.Count > 0 || Model.SalesReports != null)
-                                {
-                <div class="table-responsive table-hover">
-                    <div>
-                        <h4 style="text-align:center;">Coop Sales Report</h4>
-                    </div>
-                    <br />
-                    <table class="table">
-                        <tr class="bg-dark" id="special">
-                            <th>
-                                Image
-                            </th>
-                            <th>
-                                Product Name
-                            </th>
-                            <th>
-                                Sold Stock
-                            </th>
-                            <th>
-                                Total Sales
-                            </th>
-                            <th></th>
-                        </tr>
 
-                        @foreach (var view in Model.ViewByIDs)
+<script>
+    var dt = new Date();
+    document.getElementById("dategenerated").innerHTML = (("0" + (dt.getMonth() + 1)).slice(-2)) + "/" + (("0" + dt.getDate()).slice(-2)) + "/" + (dt.getFullYear()) + " ";
+</script>
+    <br /> 
+    if (Model.SalesReports.Count > 0 || Model.SalesReports != null)
+    {
+        <div class="table-responsive table-hover">
+            <div>
+                <h3 style="text-align: center;">PCart Online</h3>
+            </div>
+            <div>
+                <h4 style="text-align:center;">Coop Sales Report</h4>
+            </div>
+            <br />
+            <table class="table">
+                <tr class="bg-dark" id="special">
+                    <th>Date</th>
+                    <th>
+                        Product Code
+                    </th>
+                    <th>
+                        Product Name
+                    </th>
+                    <th>
+                        Sold Stock
+                    </th>
+                    <th>
+                        Sub Total
+                    </th>
+                    <th></th>
+                </tr>
+
+                @foreach (var view in Model.ViewByIDs)
+                {
+                    <tr style="text-align: center;">
+                        <td colspan="5">
+                            <b>@Html.DisplayFor(modelItem => view.ViewByID)</b>
+                        </td>
+                    </tr>
+                    <tr style="text-align: center;">
+                        <td><img src="@Url.Content("~/Images/"+view.Cooplogo)" height="60" width="60" /></td>
+                        <td colspan="4">
+                            <b>@Html.DisplayFor(modelItem => view.CoopName)</b>
+                        </td>
+                    </tr> 
+                    foreach (var item in Model.SalesReports)
+                    {
+                        if (view.ViewByID == item.ViewBy)
                         {
-    <tr style="text-align: center;">
-        <td colspan="5">
-            <b>@Html.DisplayFor(modelItem => view.ViewByID)</b>
-        </td>
-    </tr>
-                            <tr style="text-align: center;">
-                                <td colspan="5">
-                                    <b>@Html.DisplayFor(modelItem => view.CoopName)</b>
-                                </td>
-                            </tr> foreach (var item in Model.SalesReports)
-                                                    {
-                                                        if (view.ViewByID == item.ViewBy)
-                                                        {
-                                                            if (view.CoopId == item.CoopId)
-                                                            {
-                            <tr>
-                                <td>
-                                    <img src="~/Images/@item.ProdImage" width="75" />
-                                </td>
-                                <td>
-                                    @Html.DisplayFor(modelItem => item.ProdName)
-                                </td>
-                                <td>
-                                    @Html.DisplayFor(modelItem => item.SoldQty)
-                                </td>
-                                <td>
-                                    @Html.DisplayFor(modelItem => item.TotalSales)
-                                </td>
-                            </tr> }
-                                                        }
-                                                    }
-                            <tr>
-                                <td colspan="2"></td>
-                                <td><b>Total:</b></td>
-                                <td>
-                                    @Html.DisplayFor(modelItem => view.TotalSales)
-                                </td>
-                            </tr>}
-
-                    </table>
-                </div>}
+                            if (view.CoopId == item.CoopId)
+                            {
+                                <tr>
+                                    <td>@Html.DisplayFor(modleItem => item.DateBought)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.ProdID)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.ProdName)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.SoldQty)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.TotalSales)</td>
+                                </tr>
                             }
+                        }
+                    }
+
+                    <tr>
+                        <td colspan="3"></td>
+                        <td><b>Total Revenue:</b></td>
+                        <td>@Html.DisplayFor(modelItem => view.TotalSales)</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3"></td>
+                        <td><b>Total Profit:</b></td>
+                        <td>@(view.TotalSales - view.TotalCost)</td>
+                    </tr>
+                    <tr>
+                        <td colspan="5" style="background-color:black;"></td>
+                    </tr>
+                }
+
+            </table>
+        </div>
+    }
+}
 
 <div class="modal fade modal-xl" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
@@ -135,7 +154,7 @@
                         });
 
                         var allPages = oTable.fnGetNodes();
-
+                        var itemSelected = [];
                         $('body').on('click', '#toggleAll', function () {
                             if (this.checked) {
                                 if ($(this).hasClass('check')) {
@@ -148,7 +167,13 @@
                             else {
                                 $('input[type="checkbox"]', allPages).prop('checked', false);
                             }
+
                             $(this).toggleClass('allChecked');
+                            $.each($("input[type='checkbox']:checked", allPages), function () {
+                                itemSelected.push($(this).val());
+                            });
+
+                            $('#ProdIDS').val(itemSelected.toString());
                         })
 
                         $(".check").click(function () {
@@ -158,6 +183,11 @@
                             else if ($(".check").length == $(".check" + ":checked").length) {
                                 $("#toggleAll").prop('checked', true);
                             }
+                        });
+
+                        $(".check", allPages).click(function () {
+                            itemSelected.push($(this).val());
+                            $('#ProdIDS').val(itemSelected.toString());
                         });
 
                         $('#coopList').DataTable();
@@ -181,6 +211,7 @@
         </div>
 
         <div class="form-group" id="convertThisPageButtonDiv4">
+            <input type="hidden" id="ProdIDS" name="ProdIDS" />
 
             <input type="radio" id="week" name="ViewBy" value="Weekly">
             <label for="week">Weekly</label>

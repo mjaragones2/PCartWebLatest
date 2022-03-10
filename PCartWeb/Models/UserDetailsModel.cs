@@ -173,6 +173,7 @@ namespace PCartWeb.Models
         public string Contact { get; set; }
         public string Approval { get; set; }
         public string IsLocked { get; set; }
+        public string CoopLogo { get; set; }
         public string MembershipForm { get; set; }
         [Display(Name = "Date Created")]
         public DateTime Coop_Created { get; set; }
