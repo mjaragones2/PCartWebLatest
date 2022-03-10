@@ -911,8 +911,10 @@ namespace PCartWeb.Controllers
             {
                 foreach (var driver in drivers)
                 {
+                    var getuser = db.Users.Where(x => x.Id == driver.UserId).FirstOrDefault();
                     data.Add(new
                     {
+                        email = getuser.Email,
                         id = driver.Id,
                         firstname = driver.Firstname,
                         lastname = driver.Lastname,
@@ -3640,7 +3642,8 @@ namespace PCartWeb.Controllers
                     getuser.Updated_at = DateTime.Now;
 
                     var myfile1 = name1 + extension1;
-                    var path1 = Path.Combine(Server.MapPath("../Images/"), myfile1);
+                    var path1 = Path.Combine(Server.MapPath("~/Images/"), myfile1);
+                    model.ImageFile.SaveAs(path1);
                     if (model.Longitude == null)
                     {
                         model.Longitude = location.Geolocation.Longitude.ToString();
@@ -3663,7 +3666,7 @@ namespace PCartWeb.Controllers
                     db.Entry(location).State = EntityState.Modified;
                     db.SaveChanges();
                     db.Entry(getuser).State = EntityState.Modified;
-                    model.ImageFile.SaveAs(path1);
+                    
                     db.SaveChanges();
                     return RedirectToAction("ViewDriverList");
                 }
@@ -4100,6 +4103,7 @@ namespace PCartWeb.Controllers
             }, "Value", "Text", 1);
             if (user != null)
             {
+                viewmodel.Id = user.Id;
                 viewmodel.Firstname = user.Firstname;
                 viewmodel.Lastname = user.Lastname;
                 viewmodel.Image = user.Image;
@@ -4119,7 +4123,7 @@ namespace PCartWeb.Controllers
         public ActionResult EditUser(RegisterViewModel model, HttpPostedFileBase file)
         {
             var db = new ApplicationDbContext();
-            Int32 userid = (int)TempData["Id"];
+            int userid = model.Id;
             model.GenderList = new SelectList(new List<SelectListItem>
             {
                 new SelectListItem {Selected = false, Text = "Male", Value = "Male"},

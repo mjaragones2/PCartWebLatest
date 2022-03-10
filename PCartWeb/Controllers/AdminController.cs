@@ -721,7 +721,7 @@ namespace PCartWeb.Controllers
             {
                 foreach (var coop in coops)
                 {
-                    var coopdetail = db.CoopAdminDetails.Where(x => x.IsResign != null && x.Coop_code == coop.Id).FirstOrDefault();
+                    var coopdetail = db.CoopAdminDetails.Where(x => x.IsResign == null && x.Coop_code == coop.Id).FirstOrDefault();
                     data.Add(new
                     {
                         email = coopdetail.Email,

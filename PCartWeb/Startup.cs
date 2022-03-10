@@ -370,7 +370,7 @@ namespace PCartWeb
 
                 }
             }
-            else
+            else if(cooplist.Count == 1)
             {
                 for (int k = 0; k < 2; k++)
                 {

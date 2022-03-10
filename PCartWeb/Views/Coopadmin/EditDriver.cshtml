@@ -42,7 +42,8 @@
                 @Html.LabelFor(model => model.Image, htmlAttributes: new { @class = "control-label col-md-4" })
                 <div class="col-md-10">
                     <img src="@Url.Content("~/Images/"+Model.Image)" width="180" height="180" />
-                    <input type="file" name="ImageFile" />
+                    <input type="file" name="ImageFile" onchange="return ShowImagePreview(this)" id="fileupload" />
+                    <img src="#" alt="preview" id="imagePreview" style="border: 1px solid red; height: 169px; width: 176px; margin: auto; display: block;" />
                     @ViewBag.message
                 </div>
             </div>
@@ -146,6 +147,27 @@
         <div>
             @Html.ActionLink("Back to List", "ViewDriverList")
         </div>
+        <script>
+            function ShowImagePreview(input) {
+                if (input.files && input.files[0]) {
+                    var fname = input.files[0].name;
+                    var re = /(\.jpg|\.jpeg|\.bmp|\.gif|\.png)$/i;
+                    if (!re.exec(fname)) {
+                        alert("Image not supported!");
+                        $("#fileupload").val("");
+
+                        return false;
+                    }
+                    else {
+                        var reader = new FileReader();
+                        reader.onload = function (e) {
+                            $('#imagePreview').prop('src', e.target.result);
+                        };
+                        reader.readAsDataURL(input.files[0]);
+                    }
+                }
+            }
+        </script>
         <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=places&key=AIzaSyCnJbsD4WryXK2FHWETxhPml1pzNQ5KWhI"></script>
         <script type="text/javascript">
             google.maps.event.addDomListener(window, 'load', function () {
