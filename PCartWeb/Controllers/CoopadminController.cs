@@ -5543,6 +5543,7 @@ namespace PCartWeb.Controllers
             var coopdadmin = db.CoopAdminDetails.Where(x => x.UserId == userid).FirstOrDefault();
             if (coopdadmin != null)
             {
+                model.PreparedBy = coopdadmin.Firstname + " " + coopdadmin.Lastname;
                 var coopdetail = db.CoopDetails.Where(x => x.Id == coopdadmin.Coop_code).FirstOrDefault();
                 model.CoopName = coopdetail.CoopName;
                 model.CoopLogo = coopdetail.CoopLogo;
@@ -5573,8 +5574,9 @@ namespace PCartWeb.Controllers
             List<string> date = new List<string>();
             List<string> prodId = new List<string>();
             decimal price = 0;
-
+            
             var coopdadmin = db.CoopAdminDetails.Where(x => x.UserId == userid).FirstOrDefault();
+            model.PreparedBy = coopdadmin.Firstname + " " + coopdadmin.Lastname;
             if(coopdadmin != null)
             {
                 var coopdetail = db.CoopDetails.Where(x => x.Id == coopdadmin.Coop_code).FirstOrDefault();
@@ -5986,6 +5988,7 @@ namespace PCartWeb.Controllers
             decimal price = 0;
             var userid = User.Identity.GetUserId();
             var coopdadmin = db.CoopAdminDetails.Where(x => x.UserId == userid).FirstOrDefault();
+            model.PreparedBy = coopdadmin.Firstname + " " + coopdadmin.Lastname;
             if (coopdadmin != null)
             {
                 var coopdetail = db.CoopDetails.Where(x => x.Id == coopdadmin.Coop_code).FirstOrDefault();

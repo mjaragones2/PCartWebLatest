@@ -71,7 +71,7 @@
                         <div class="form-group">
                             @Html.LabelFor(model => model.Bdate, htmlAttributes: new { @class = "control-label col-md-5" })
                             <div class="col-md-10">
-                                <input type="date" id="Bdate" name="Bdate" class="form-control" placeholder="dd/mm/yyyy" />
+                                @Html.TextBoxFor(model => model.Bdate, "{0:yyyy-MM-dd}", new { @class = "form-control input-sm datepicker", @type = "date", placeholder = "mm/dd/yyyy", max = DateTime.Today.ToString("yyyy-MM-dd") })
                                 <p class="text-danger" style="display: none;" id="ErrorBDate"></p>
                             </div>
                         </div>

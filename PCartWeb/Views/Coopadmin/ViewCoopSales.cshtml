@@ -39,7 +39,7 @@
 
 <div class="row">
     <div class="col-sm">
-        <img src="@Url.Content("~/Images/"+Model.CoopLogo)" height="100" />
+        <img src="@Url.Content("~/Images/"+Model.CoopLogo)" height="100" style="margin-left: 260px;" />
     </div>
     <div class="col-sm">
         <h3 style="text-align:center;">@Model.CoopName</h3>
@@ -124,8 +124,14 @@
             }
 
             </table>
-        </div>}
+        </div>
+        
+        }
+    <div style="margin-top: 70px;">
+            <h5>Prepared By: </h5><h4>@Model.PreparedBy</h4>
+        </div>
          }
+ 
 
 <div class="modal fade modal-xl" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">

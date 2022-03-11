@@ -401,6 +401,7 @@ namespace PCartWeb.Models
 
     public class ViewSalesReport
     {
+        public string PreparedBy { get; set; }
         public string ProdIDS { get; set; }
         public string CoopLogo { get; set; }
         public string CoopName { get; set; }
