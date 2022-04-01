@@ -30,7 +30,7 @@
         <div class="form-group">
             @Html.LabelFor(model => model.Product_image, htmlAttributes: new { @class = "control-label col-md-4" })
             <div class="col-md-10">
-                <input class="form-control" name="ImageFile" type="file" id="formFile">
+                <input class="form-control" name="ImageFile" type="file" id="formFile" accept="image/*">
                 @ViewBag.ErrorMessage
                 @Html.ValidationMessageFor(model => model.ImageFile, "", new { @class = "text-danger" })
             </div>

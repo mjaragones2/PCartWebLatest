@@ -37,7 +37,7 @@
                                         <div class="form-group row">
                                             @Html.LabelFor(model => model.Cooplogo, htmlAttributes: new { @class = "control-label col-md-5" })
                                             <div class="col-md-10">
-                                                <input name="LogoFile" type="file" id="formFile">
+                                                <input name="LogoFile" type="file" id="formFile" accept="image/*">
                                                 @Html.ValidationMessageFor(model => model.Cooplogo, "", new { @class = "text-danger" })
                                             </div>
                                         </div>
